@@ -28,7 +28,7 @@ MPU9250 IMU;
 #define BtnPin 35
 RTC_DATA_ATTR int bootCount = 0;
 
-U8G2_SH1107_64X128_F_4W_HW_SPI u8g2(U8G2_R1, /* cs=*/ 14, /* dc=*/ 27, /* reset=*/ 33);
+U8G2_SH1107_64X128_F_4W_HW_SPI u8g2(U8G2_R3, /* cs=*/ 14, /* dc=*/ 27, /* reset=*/ 33);
 
 /*
   Method to print the reason by which ESP32
@@ -115,10 +115,11 @@ void setup() {
   log("4");
   if (counter % 2 == 0 ) {
     Serial.println("even counter: run normally");
+    showSplashScreen();
     setupMPU9250();
   } else {
-    Serial.println("odd counter: directly go to power off");
-    powerOff();
+    Serial.println("odd counter: directly go to deep sleep");
+    deepSleep();
   }
 
   //Increment boot number and print it every reboot
@@ -128,6 +129,11 @@ void setup() {
   print_wakeup_reason();
 }
 
+void showSplashScreen() {
+  u8g2.clearBuffer();
+  u8g2.drawStr(10, 20, "Loading...");
+  u8g2.sendBuffer();
+}
 
 void setupMPU9250() {
   byte c = IMU.readByte(MPU9250_ADDRESS, WHO_AM_I_MPU9250);
@@ -316,8 +322,7 @@ void readMPU9250() {
     IMU.yaw   -= 8.5;
     IMU.roll  *= RAD_TO_DEG;
 
-    if (SerialDebug2)
-    {
+    if (SerialDebug2) {
       // Serial.println("Yaw, Pitch, Roll: ");
       Serial.print(IMU.yaw, 2);
       Serial.print(", ");
@@ -340,7 +345,7 @@ unsigned long keepWakeUpTime = 0;
 void loop() {
   if (millis() - keepWakeUpTime > 60 * 1000) {
     increasePrefCounter();
-    powerOff();
+    deepSleep();
   }
   if (digitalRead(BtnPin) == 1) {
     powerOffButtonTime = 0;
@@ -349,11 +354,9 @@ void loop() {
     u8g2.clearBuffer();
     u8g2.drawStr(10, 10, "Hello,");
     u8g2.drawStr(10, 20, "DIY Stick Watch!");
-    //    u8g2.drawCircle(64, 45, 10);
-    //    u8g2.drawDisc(64, 45, 5);
 
-    int cursor_x = SCREEN_WIDTH / 2 - (int)(SCREEN_WIDTH / 2 * (IMU.roll / MAX_CURSOR_ACC));
-    int cursor_y = SCREEN_HEIGHT / 2 + (int)(SCREEN_HEIGHT / 2 * (IMU.pitch / MAX_CURSOR_ACC));
+    int cursor_x = SCREEN_WIDTH / 2 + (int)(SCREEN_WIDTH / 2 * (IMU.roll / MAX_CURSOR_ACC));
+    int cursor_y = SCREEN_HEIGHT / 2 - (int)(SCREEN_HEIGHT / 2 * (IMU.pitch / MAX_CURSOR_ACC));
     if (cursor_x < 0 ) {
       cursor_x = 0;
     }
@@ -378,24 +381,24 @@ void loop() {
     }
     if (powerOffButtonTime != 0 && currTime - powerOffButtonTime > 1000) {
       Serial.println("long pressed, delay and going to sleep now");
-      powerOff();
+      deepSleep();
     }
   }
 }
 
-void powerOff() {
+void deepSleep() {
   u8g2.clearBuffer();
-  u8g2.drawStr(20, 30, "powering off...");
+  u8g2.drawStr(20, 30, "Deep sleep now...");
   u8g2.sendBuffer();
 
   delay(1000);
-  powerOffAnimation();
+  screenOffAnimation();
   // esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
   esp_deep_sleep_start();
   Serial.println("This will never be printed");
 }
 
-void powerOffAnimation() {
+void screenOffAnimation() {
   for (int i = 0; i < 32; i++) {
     u8g2.clearBuffer();
     u8g2.drawLine(0, i, 128, i);
