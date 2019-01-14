@@ -10,6 +10,7 @@
 
 #include "esp_log.h"
 #include "esp_pm.h"
+#include <esp_deep_sleep.h>
 
 #include <Preferences.h>
 
@@ -32,7 +33,7 @@ static const char *TAG = "example";
 
 const char* ssid       = "MIWIFI8";
 const char* password   = "12345678";
-
+#define HUNDRED_NANO_SECONDS (1000*1000*10)
 const long  gmtOffset_sec = 3600 * 8;
 
 
@@ -52,6 +53,19 @@ U8G2_SH1107_64X128_F_4W_HW_SPI u8g2(U8G2_R3, /* cs=*/ 14, /* dc=*/ 27, /* reset=
 
 WiFiMulti wifiMulti;
 
+
+char * reason;
+char REASON_UNDEFINED[] = "UNDEFINED";
+char REASON_ALL[] = "ALL";
+char REASON_EXT0[] = "RTC_IO";
+char REASON_EXT1[] = "RTC_CNTL";
+char REASON_TIMER[] = "TIMER";
+char REASON_TOUCHPAD[] = "TOUCHPAD";
+char REASON_ULP[] = "ULP";
+char REASON_GPIO[] = "GPIO";
+char REASON_UART[] = "UART";
+char REASON_OTHERS[] = "OTHERS";
+
 /*
   Method to print the reason by which ESP32
   has been awaken from sleep
@@ -60,14 +74,19 @@ void print_wakeup_reason() {
   esp_sleep_wakeup_cause_t wakeup_reason;
   wakeup_reason = esp_sleep_get_wakeup_cause();
   switch (wakeup_reason) {
-    case ESP_SLEEP_WAKEUP_EXT0 : ESP_LOGI(TAG, "Wakeup caused by external signal using RTC_IO"); break;
-    case ESP_SLEEP_WAKEUP_EXT1 : ESP_LOGI(TAG, "Wakeup caused by external signal using RTC_CNTL"); break;
-    case ESP_SLEEP_WAKEUP_TIMER : ESP_LOGI(TAG, "Wakeup caused by timer"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : ESP_LOGI(TAG, "Wakeup caused by touchpad"); break;
-    case ESP_SLEEP_WAKEUP_ULP : ESP_LOGI(TAG, "Wakeup caused by ULP program"); break;
-    default : ESP_LOGI(TAG, "Wakeup was not caused by deep sleep: %d\n", wakeup_reason); break;
+    case ESP_SLEEP_WAKEUP_UNDEFINED : ESP_LOGI(TAG, "In case of deep sleep, reset was not caused by exit from deep sleep"); reason = REASON_UNDEFINED; break;
+    case ESP_SLEEP_WAKEUP_ALL : ESP_LOGI(TAG, "Not a wakeup cause, used to disable all wakeup sources"); reason = REASON_ALL; break;
+    case ESP_SLEEP_WAKEUP_EXT0 : ESP_LOGI(TAG, "Wakeup caused by external signal using RTC_IO"); reason = REASON_EXT0; break;
+    case ESP_SLEEP_WAKEUP_EXT1 : ESP_LOGI(TAG, "Wakeup caused by external signal using RTC_CNTL"); reason = REASON_EXT1; break;
+    case ESP_SLEEP_WAKEUP_TIMER : ESP_LOGI(TAG, "Wakeup caused by timer"); reason = REASON_TIMER; break;
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : ESP_LOGI(TAG, "Wakeup caused by touchpad"); reason = REASON_TOUCHPAD; break;
+    case ESP_SLEEP_WAKEUP_ULP : ESP_LOGI(TAG, "Wakeup caused by ULP program"); reason = REASON_ULP; break;
+    case ESP_SLEEP_WAKEUP_GPIO : ESP_LOGI(TAG, "Wakeup caused by GPIO (light sleep only)"); reason = REASON_GPIO; break;
+    case ESP_SLEEP_WAKEUP_UART : ESP_LOGI(TAG, "Wakeup caused by UART (light sleep only)"); reason = REASON_UART; break;
+    default : ESP_LOGI(TAG, "Wakeup was not caused by deep sleep: %d\n", wakeup_reason); reason = REASON_OTHERS; break;
   }
 }
+
 
 //void set_freq(int freq) {
 //  if (freq > 240) freq /= 1000000;
@@ -114,8 +133,9 @@ void setup() {
   u8g2.begin();
   ESP_LOGD(TAG, "2");
   // u8g2.fillDisplay();
-  u8g2.setFont(u8g2_font_6x10_tf);
   // u8g2.setFont(u8g2_font_unifont_t_chinese2);
+  u8g2.setFont(u8g2_font_6x10_tf);
+  // u8g2.setFont(u8g2_font_6x10_tf);
   u8g2.setFontRefHeightExtendedText();
   // u8g2.setDrawColor(1);
   u8g2.setFontPosTop();
@@ -192,8 +212,9 @@ void syncTimeFromWifi() {
         Serial.println( currentFileTime);
         uint64_t c_time = obj["currentFileTime"].as<unsigned long long>();
 
-        struct timeval tv;
-        tv.tv_sec = c_time / 1000 / 1000 / 10 - 11644473600 + gmtOffset_sec;
+        struct timeval tv = {};
+        tv.tv_sec = c_time / HUNDRED_NANO_SECONDS - 11644473600 + gmtOffset_sec;
+        tv.tv_usec = 0;
         settimeofday(&tv, NULL);
         printLocalTime();
         Serial.println( int64String(c_time));
@@ -444,6 +465,7 @@ void drawCursor() {
   u8g2.drawTriangle(cursor_x, cursor_y, cursor_x, cursor_y + 9, cursor_x + 6, cursor_y + 6);
   u8g2.drawLine(cursor_x + 2, cursor_y + 3, cursor_x + 4, cursor_y + 11);
 }
+
 void loop() {
   if (millis() - keepWakeUpTime > 60 * 1000) {
     increasePrefCounter();
@@ -454,8 +476,11 @@ void loop() {
     // u8x8.setInverseFont(1);
     readMPU9250();
     u8g2.clearBuffer();
+    // u8g2.setFont(u8g2_font_6x10_tf);
+    // u8g2_font_4x6_tf, u8g2_font_5x7_tf, u8g2_font_5x8_tf
     u8g2.drawStr(10, 10, "Hello,");
     u8g2.drawStr(10, 20, "DIY Stick Watch!");
+    u8g2.drawStr(70, 1, reason);
     if (isTimeOK) {
       drawTime();
     }
@@ -483,6 +508,7 @@ void drawTime() {
     char timeStringBuff[50]; //50 chars should be enough
     strftime(dateStringBuff, sizeof(dateStringBuff), "%Y-%m-%d %a", &timeinfo);
     strftime(timeStringBuff, sizeof(timeStringBuff), "%H:%M:%S", &timeinfo);
+    // u8g2.setFont(u8g2_font_5x8_tf);
     u8g2.drawStr(40, 40, dateStringBuff);
     u8g2.drawStr(40, 50, timeStringBuff);
   }
@@ -495,6 +521,7 @@ void deepSleep() {
 
   delay(1000);
   screenOffAnimation();
+  // esp_deep_sleep_enable_ext0_wakeup(35, LOW);
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
   esp_deep_sleep_start();
   Serial.println("This will never be printed");
