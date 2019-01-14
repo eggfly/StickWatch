@@ -8,17 +8,37 @@
 #include <Wire.h>
 #endif
 
+#include "esp_log.h"
 #include "esp_pm.h"
 
 #include <Preferences.h>
 
-// #include <M5Stack.h>
 #include "MPU9250.h"
 #include "quaternionFilters.h"
 
+#include <WiFi.h>
+
+#include <WiFiMulti.h>
+#include <HTTPClient.h>
+#include <Int64String.h>
+
+#define ARDUINOJSON_USE_LONG_LONG 1
+#include "ArduinoJson.h"
+
+// #include "time.h"
+// #include <sys/time.h>
+
+static const char *TAG = "example";
+
+const char* ssid       = "MIWIFI8";
+const char* password   = "12345678";
+
+const long  gmtOffset_sec = 3600 * 8;
+
+
 #define AHRS true         // Set to false for basic data read
-#define SerialDebug false  // Set to true to get Serial output for debugging
-#define SerialDebug2 false  // Set to true to get Serial output for debugging
+#define SerialDebugMPU9250 false  // Set to true to get Serial output for debugging
+#define SerialDebugCalibrate false  // Set to true to get Serial output for debugging
 
 MPU9250 IMU;
 
@@ -30,6 +50,8 @@ RTC_DATA_ATTR int bootCount = 0;
 
 U8G2_SH1107_64X128_F_4W_HW_SPI u8g2(U8G2_R3, /* cs=*/ 14, /* dc=*/ 27, /* reset=*/ 33);
 
+WiFiMulti wifiMulti;
+
 /*
   Method to print the reason by which ESP32
   has been awaken from sleep
@@ -37,33 +59,32 @@ U8G2_SH1107_64X128_F_4W_HW_SPI u8g2(U8G2_R3, /* cs=*/ 14, /* dc=*/ 27, /* reset=
 void print_wakeup_reason() {
   esp_sleep_wakeup_cause_t wakeup_reason;
   wakeup_reason = esp_sleep_get_wakeup_cause();
-  switch (wakeup_reason)
-  {
-    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RTC_IO"); break;
-    case ESP_SLEEP_WAKEUP_EXT1 : Serial.println("Wakeup caused by external signal using RTC_CNTL"); break;
-    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
-    case ESP_SLEEP_WAKEUP_TOUCHPAD : Serial.println("Wakeup caused by touchpad"); break;
-    case ESP_SLEEP_WAKEUP_ULP : Serial.println("Wakeup caused by ULP program"); break;
-    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason); break;
+  switch (wakeup_reason) {
+    case ESP_SLEEP_WAKEUP_EXT0 : ESP_LOGI(TAG, "Wakeup caused by external signal using RTC_IO"); break;
+    case ESP_SLEEP_WAKEUP_EXT1 : ESP_LOGI(TAG, "Wakeup caused by external signal using RTC_CNTL"); break;
+    case ESP_SLEEP_WAKEUP_TIMER : ESP_LOGI(TAG, "Wakeup caused by timer"); break;
+    case ESP_SLEEP_WAKEUP_TOUCHPAD : ESP_LOGI(TAG, "Wakeup caused by touchpad"); break;
+    case ESP_SLEEP_WAKEUP_ULP : ESP_LOGI(TAG, "Wakeup caused by ULP program"); break;
+    default : ESP_LOGI(TAG, "Wakeup was not caused by deep sleep: %d\n", wakeup_reason); break;
   }
 }
 
-void set_freq(int freq) {
-  if (freq > 240) freq /= 1000000;
-  rtc_cpu_freq_t max_freq;
-  if (!rtc_clk_cpu_freq_from_mhz(freq, &max_freq)) {
-    Serial.println("Not a valid frequency");
-  }
-  esp_pm_config_esp32_t pm_config;
-  pm_config.max_cpu_freq = max_freq;
-  pm_config.min_cpu_freq = RTC_CPU_FREQ_XTAL;
-  pm_config.light_sleep_enable = false;
-
-  if (esp_pm_configure(&pm_config) != ESP_OK) {
-    Serial.println("Error configuring frequency");
-  }
-  rtc_clk_cpu_freq_set(max_freq);
-}
+//void set_freq(int freq) {
+//  if (freq > 240) freq /= 1000000;
+//  rtc_cpu_freq_t max_freq;
+//  if (!rtc_clk_cpu_freq_from_mhz(freq, &max_freq)) {
+//    Serial.println("Not a valid frequency");
+//  }
+//  esp_pm_config_esp32_t pm_config;
+//  pm_config.max_cpu_freq = max_freq;
+//  pm_config.min_cpu_freq = RTC_CPU_FREQ_XTAL;
+//  pm_config.light_sleep_enable = false;
+//
+//  if (esp_pm_configure(&pm_config) != ESP_OK) {
+//    Serial.println("Error configuring frequency");
+//  }
+//  rtc_clk_cpu_freq_set(max_freq);
+//}
 
 void log(char * str) {
   Serial.print(millis()); Serial.print(":"); Serial.println(str);
@@ -84,14 +105,14 @@ unsigned int increasePrefCounter () {
 }
 
 void setup() {
-
+  ESP_LOGD(TAG, "0");
+  Serial.begin(115200);
   Wire.begin();
   // set_freq(240);
-  Serial.begin(115200);
-  log("1");
+  ESP_LOGD(TAG, "1");
 
   u8g2.begin();
-  log("2");
+  ESP_LOGD(TAG, "2");
   // u8g2.fillDisplay();
   u8g2.setFont(u8g2_font_6x10_tf);
   // u8g2.setFont(u8g2_font_unifont_t_chinese2);
@@ -99,11 +120,11 @@ void setup() {
   // u8g2.setDrawColor(1);
   u8g2.setFontPosTop();
   // u8g2.setFontDirection(0);
-  log("3");
+  ESP_LOGD(TAG, "3");
 
   // delay(1500);
   // u8g2.clearDisplay();
-  //u8g2.clear();
+  // u8g2.clear();
   // Open Preferences with my-app namespace. Each application module, library, etc
   // has to use a namespace name to prevent key name collisions. We will open storage in
   // RW-mode (second parameter has to be false).
@@ -111,27 +132,103 @@ void setup() {
 
   pinMode(BtnPin, INPUT_PULLUP);
 
-  unsigned int counter = increasePrefCounter();
-  log("4");
-  if (counter % 2 == 0 ) {
-    Serial.println("even counter: run normally");
-    showSplashScreen();
-    setupMPU9250();
-  } else {
-    Serial.println("odd counter: directly go to deep sleep");
-    deepSleep();
-  }
+  ESP_LOGD(TAG, "4");
+  showSplashScreen();
+  setupMPU9250();
+
+  wifiMulti.addAP(ssid, password);
+  wifiMulti.addAP("eggfly", "12345678");
+
+  syncTimeFromWifi();
 
   //Increment boot number and print it every reboot
   ++bootCount;
-  Serial.println("Boot number: " + String(bootCount));
+  ESP_LOGI(TAG, "Boot count: %d", bootCount);
   //Print the wakeup reason for ESP32
   print_wakeup_reason();
 }
 
+bool isTimeOK = false;
+
+void syncTimeFromWifi() {
+  struct tm timeinfo;
+  if (getLocalTime(&timeinfo)) {
+    Serial.println("RTC already have time, will not connect to time server");
+    isTimeOK = true;
+    printLocalTime();
+  } else {
+    ESP_LOGE(TAG, "Failed to obtain time");
+    Serial.printf("Connecting to %s ", ssid);
+    while (wifiMulti.run() != WL_CONNECTED) {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println("");
+    Serial.println("Yes WIFI Connected");
+
+    HTTPClient http;
+    Serial.print("[HTTP] begin...\n");
+    // configure traged server and url
+    http.begin("http://worldclockapi.com/api/json/utc/now"); //HTTP
+
+    Serial.print("[HTTP] GET...\n");
+    // start connection and send HTTP header
+    int httpCode = http.GET();
+
+    // httpCode will be negative on error
+    if (httpCode > 0) {
+      // HTTP header has been send and Server response header has been handled
+      Serial.printf("[HTTP] GET... code: %d\n", httpCode);
+
+      // file found at server
+      if (httpCode == HTTP_CODE_OK) {
+        String payload = http.getString();
+        Serial.printf("length: %d\n", payload.length());
+        DynamicJsonDocument doc;
+        deserializeJson(doc, payload);
+        JsonObject obj = doc.as<JsonObject>();
+
+        String currentFileTime = obj[String("currentFileTime")];
+        Serial.println( currentFileTime);
+        uint64_t c_time = obj["currentFileTime"].as<unsigned long long>();
+
+        struct timeval tv;
+        tv.tv_sec = c_time / 1000 / 1000 / 10 - 11644473600 + gmtOffset_sec;
+        settimeofday(&tv, NULL);
+        printLocalTime();
+        Serial.println( int64String(c_time));
+      }
+    } else {
+      Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+    }
+
+    http.end();
+
+    //init and get the time
+    if (!getLocalTime(&timeinfo)) {
+      Serial.println("Failed config time by server");
+    } else {
+      Serial.println("Successfully config time by server:");
+      isTimeOK = true;
+      printLocalTime();
+    }
+    //disconnect WiFi as it's no longer needed
+    WiFi.disconnect(true);
+    WiFi.mode(WIFI_OFF);
+  }
+}
+
+void printLocalTime() {
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("Failed to obtain local time");
+    return;
+  }
+  Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+}
 void showSplashScreen() {
   u8g2.clearBuffer();
-  u8g2.drawStr(10, 20, "Loading...");
+  u8g2.drawStr(10, 20, "LOADING...");
   u8g2.sendBuffer();
 }
 
@@ -143,18 +240,21 @@ void setupMPU9250() {
     Serial.println("MPU9250 is online...");
     // Start by performing self test and reporting values
     IMU.MPU9250SelfTest(IMU.SelfTest);
-    Serial.print("x-axis self test: acceleration trim within : ");
-    Serial.print(IMU.SelfTest[0], 1); Serial.println("% of factory value");
-    Serial.print("y-axis self test: acceleration trim within : ");
-    Serial.print(IMU.SelfTest[1], 1); Serial.println("% of factory value");
-    Serial.print("z-axis self test: acceleration trim within : ");
-    Serial.print(IMU.SelfTest[2], 1); Serial.println("% of factory value");
-    Serial.print("x-axis self test: gyration trim within : ");
-    Serial.print(IMU.SelfTest[3], 1); Serial.println("% of factory value");
-    Serial.print("y-axis self test: gyration trim within : ");
-    Serial.print(IMU.SelfTest[4], 1); Serial.println("% of factory value");
-    Serial.print("z-axis self test: gyration trim within : ");
-    Serial.print(IMU.SelfTest[5], 1); Serial.println("% of factory value");
+    if (SerialDebugCalibrate) {
+      Serial.print("x-axis self test: acceleration trim within : ");
+      Serial.print(IMU.SelfTest[0], 1); Serial.println("% of factory value");
+      Serial.print("y-axis self test: acceleration trim within : ");
+      Serial.print(IMU.SelfTest[1], 1); Serial.println("% of factory value");
+      Serial.print("z-axis self test: acceleration trim within : ");
+      Serial.print(IMU.SelfTest[2], 1); Serial.println("% of factory value");
+      Serial.print("x-axis self test: gyration trim within : ");
+      Serial.print(IMU.SelfTest[3], 1); Serial.println("% of factory value");
+      Serial.print("y-axis self test: gyration trim within : ");
+      Serial.print(IMU.SelfTest[4], 1); Serial.println("% of factory value");
+      Serial.print("z-axis self test: gyration trim within : ");
+      Serial.print(IMU.SelfTest[5], 1); Serial.println("% of factory value");
+    }
+    Serial.print("MPU9250 acceleration and gyration self test done!");
 
     // Calibrate gyro and accelerometers, load biases in bias registers
     IMU.calibrateMPU9250(IMU.gyroBias, IMU.accelBias);
@@ -174,9 +274,8 @@ void setupMPU9250() {
     IMU.initAK8963(IMU.magCalibration);
     // Initialize device for active mode read of magnetometer
     Serial.println("AK8963 initialized for active data mode....");
-    if (Serial)
-    {
-      //  Serial.println("Calibration values: ");
+    if (SerialDebugCalibrate) {
+      Serial.println("Calibration values: ");
       Serial.print("X-Axis sensitivity adjustment value ");
       Serial.println(IMU.magCalibration[0], 2);
       Serial.print("Y-Axis sensitivity adjustment value ");
@@ -184,6 +283,7 @@ void setupMPU9250() {
       Serial.print("Z-Axis sensitivity adjustment value ");
       Serial.println(IMU.magCalibration[2], 2);
     }
+    Serial.println("AK8963 magCalibration done!");
   }
 }
 
@@ -254,7 +354,7 @@ void readMPU9250() {
 
   if (IMU.delt_t > 100)
   {
-    if (SerialDebug)
+    if (SerialDebugMPU9250)
     {
       Serial.print("ax = ");
       Serial.print((int)1000 * IMU.ax);
@@ -290,22 +390,6 @@ void readMPU9250() {
       Serial.println(*(getQ() + 3));
     }
 
-    // Define output variables from updated quaternion---these are Tait-Bryan
-    // angles, commonly used in aircraft orientation. In this coordinate system,
-    // the positive z-axis is down toward Earth. Yaw is the angle between Sensor
-    // x-axis and Earth magnetic North (or true North if corrected for local
-    // declination, looking down on the sensor positive yaw is counterclockwise.
-    // Pitch is angle between sensor x-axis and Earth ground plane, toward the
-    // Earth is positive, up toward the sky is negative. Roll is angle between
-    // sensor y-axis and Earth ground plane, y-axis up is positive roll. These
-    // arise from the definition of the homogeneous rotation matrix constructed
-    // from quaternions. Tait-Bryan angles as well as Euler angles are
-    // non-commutative; that is, the get the correct orientation the rotations
-    // must be applied in the correct order which for this configuration is yaw,
-    // pitch, and then roll.
-    // For more see
-    // http://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
-    // which has additional links.
     IMU.yaw   = atan2(2.0f * (*(getQ() + 1) * *(getQ() + 2) + *getQ() *
                               *(getQ() + 3)), *getQ() * *getQ() + * (getQ() + 1) * *(getQ() + 1)
                       - * (getQ() + 2) * *(getQ() + 2) - * (getQ() + 3) * *(getQ() + 3));
@@ -322,7 +406,7 @@ void readMPU9250() {
     IMU.yaw   -= 8.5;
     IMU.roll  *= RAD_TO_DEG;
 
-    if (SerialDebug2) {
+    if (SerialDebugMPU9250) {
       // Serial.println("Yaw, Pitch, Roll: ");
       Serial.print(IMU.yaw, 2);
       Serial.print(", ");
@@ -342,6 +426,24 @@ const float MAX_CURSOR_ACC = 16;
 
 unsigned long keepWakeUpTime = 0;
 
+void drawCursor() {
+  int cursor_x = SCREEN_WIDTH / 2 + (int)(SCREEN_WIDTH / 2 * (IMU.roll / MAX_CURSOR_ACC));
+  int cursor_y = SCREEN_HEIGHT / 2 - (int)(SCREEN_HEIGHT / 2 * (IMU.pitch / MAX_CURSOR_ACC));
+  if (cursor_x < 0 ) {
+    cursor_x = 0;
+  }
+  if (cursor_x >= SCREEN_WIDTH) {
+    cursor_x = SCREEN_WIDTH - 1;
+  }
+  if (cursor_y < 0) {
+    cursor_y = 0;
+  }
+  if (cursor_y >= SCREEN_HEIGHT - 1) {
+    cursor_y = SCREEN_HEIGHT - 2;
+  }
+  u8g2.drawTriangle(cursor_x, cursor_y, cursor_x, cursor_y + 9, cursor_x + 6, cursor_y + 6);
+  u8g2.drawLine(cursor_x + 2, cursor_y + 3, cursor_x + 4, cursor_y + 11);
+}
 void loop() {
   if (millis() - keepWakeUpTime > 60 * 1000) {
     increasePrefCounter();
@@ -354,24 +456,10 @@ void loop() {
     u8g2.clearBuffer();
     u8g2.drawStr(10, 10, "Hello,");
     u8g2.drawStr(10, 20, "DIY Stick Watch!");
-
-    int cursor_x = SCREEN_WIDTH / 2 + (int)(SCREEN_WIDTH / 2 * (IMU.roll / MAX_CURSOR_ACC));
-    int cursor_y = SCREEN_HEIGHT / 2 - (int)(SCREEN_HEIGHT / 2 * (IMU.pitch / MAX_CURSOR_ACC));
-    if (cursor_x < 0 ) {
-      cursor_x = 0;
+    if (isTimeOK) {
+      drawTime();
     }
-    if (cursor_x >= SCREEN_WIDTH) {
-      cursor_x = SCREEN_WIDTH - 1;
-    }
-    if (cursor_y < 0) {
-      cursor_y = 0;
-    }
-    if (cursor_y >= SCREEN_HEIGHT - 1) {
-      cursor_y = SCREEN_HEIGHT - 2;
-    }
-    u8g2.drawTriangle(cursor_x, cursor_y, cursor_x, cursor_y + 9, cursor_x + 6, cursor_y + 6);
-    u8g2.drawLine(cursor_x + 2, cursor_y + 3, cursor_x + 4, cursor_y + 11);
-
+    drawCursor();
     u8g2.sendBuffer();
   } else {
     unsigned long currTime = millis();
@@ -386,14 +474,28 @@ void loop() {
   }
 }
 
+void drawTime() {
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("Failed to get local time, should not be here?");
+  } else {
+    char dateStringBuff[50]; //50 chars should be enough
+    char timeStringBuff[50]; //50 chars should be enough
+    strftime(dateStringBuff, sizeof(dateStringBuff), "%Y-%m-%d %a", &timeinfo);
+    strftime(timeStringBuff, sizeof(timeStringBuff), "%H:%M:%S", &timeinfo);
+    u8g2.drawStr(40, 40, dateStringBuff);
+    u8g2.drawStr(40, 50, timeStringBuff);
+  }
+}
+
 void deepSleep() {
   u8g2.clearBuffer();
-  u8g2.drawStr(20, 30, "Deep sleep now...");
+  u8g2.drawStr(10, 30, "Deep sleep now...");
   u8g2.sendBuffer();
 
   delay(1000);
   screenOffAnimation();
-  // esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
   esp_deep_sleep_start();
   Serial.println("This will never be printed");
 }
