@@ -179,66 +179,81 @@ void syncTimeFromWifi() {
   } else {
     ESP_LOGE(TAG, "Failed to obtain time");
     Serial.printf("Connecting to %s ", ssid);
+    boolean wifiConnected = true;
+    unsigned long wifiStartTime = millis();
+    showConnectingWifi();
     while (wifiMulti.run() != WL_CONNECTED) {
-      delay(500);
       Serial.print(".");
+      delay(500);
+      if (millis() - wifiStartTime >= 10 * 1000) {
+        wifiConnected = false;
+        break;
+      }
     }
     Serial.println("");
-    Serial.println("Yes WIFI Connected");
-
-    HTTPClient http;
-    Serial.print("[HTTP] begin...\n");
-    // configure traged server and url
-    http.begin("http://worldclockapi.com/api/json/utc/now"); //HTTP
-
-    Serial.print("[HTTP] GET...\n");
-    // start connection and send HTTP header
-    int httpCode = http.GET();
-
-    // httpCode will be negative on error
-    if (httpCode > 0) {
-      // HTTP header has been send and Server response header has been handled
-      Serial.printf("[HTTP] GET... code: %d\n", httpCode);
-
-      // file found at server
-      if (httpCode == HTTP_CODE_OK) {
-        String payload = http.getString();
-        Serial.printf("length: %d\n", payload.length());
-        DynamicJsonDocument doc;
-        deserializeJson(doc, payload);
-        JsonObject obj = doc.as<JsonObject>();
-
-        String currentFileTime = obj[String("currentFileTime")];
-        Serial.println( currentFileTime);
-        uint64_t c_time = obj["currentFileTime"].as<unsigned long long>();
-
-        struct timeval tv = {};
-        tv.tv_sec = c_time / HUNDRED_NANO_SECONDS - 11644473600 + gmtOffset_sec;
-        tv.tv_usec = 0;
-        settimeofday(&tv, NULL);
-        printLocalTime();
-        Serial.println( int64String(c_time));
-      }
+    if (wifiConnected) {
+      showWifiConnected();
+      Serial.println("Yes! WIFI Connected");
+      syncTimeByHttp();
     } else {
-      Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+      Serial.println("No, WIFI not connected");
     }
-
-    http.end();
-
-    //init and get the time
-    if (!getLocalTime(&timeinfo)) {
-      Serial.println("Failed config time by server");
-    } else {
-      Serial.println("Successfully config time by server:");
-      isTimeOK = true;
-      printLocalTime();
-    }
-    //disconnect WiFi as it's no longer needed
     WiFi.disconnect(true);
     WiFi.mode(WIFI_OFF);
   }
 }
 
+void syncTimeByHttp() {
+  HTTPClient http;
+  Serial.print("[HTTP] begin...\n");
+  // configure traged server and url
+  http.begin("http://worldclockapi.com/api/json/utc/now"); //HTTP
+
+  Serial.print("[HTTP] GET...\n");
+  // start connection and send HTTP header
+  int httpCode = http.GET();
+
+  // httpCode will be negative on error
+  if (httpCode > 0) {
+    // HTTP header has been send and Server response header has been handled
+    Serial.printf("[HTTP] GET... code: %d\n", httpCode);
+
+    // file found at server
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      Serial.printf("length: %d\n", payload.length());
+      DynamicJsonDocument doc;
+      deserializeJson(doc, payload);
+      JsonObject obj = doc.as<JsonObject>();
+
+      String currentFileTime = obj[String("currentFileTime")];
+      Serial.println( currentFileTime);
+      uint64_t c_time = obj["currentFileTime"].as<unsigned long long>();
+
+      struct timeval tv = {};
+      tv.tv_sec = c_time / HUNDRED_NANO_SECONDS - 11644473600 + gmtOffset_sec;
+      tv.tv_usec = 0;
+      settimeofday(&tv, NULL);
+      printLocalTime();
+      Serial.println( int64String(c_time));
+    }
+  } else {
+    Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
+  }
+
+  http.end();
+
+  struct tm timeinfo;
+  //init and get the time
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("Failed config time by server");
+  } else {
+    Serial.println("Successfully config time by server:");
+    isTimeOK = true;
+    printLocalTime();
+  }
+  //disconnect WiFi as it's no longer needed
+}
 void printLocalTime() {
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo)) {
@@ -250,6 +265,16 @@ void printLocalTime() {
 void showSplashScreen() {
   u8g2.clearBuffer();
   u8g2.drawStr(10, 20, "LOADING...");
+  u8g2.sendBuffer();
+}
+void showConnectingWifi() {
+  u8g2.clearBuffer();
+  u8g2.drawStr(10, 20, "CONNECTING WIFI...");
+  u8g2.sendBuffer();
+}
+void showWifiConnected() {
+  u8g2.clearBuffer();
+  u8g2.drawStr(10, 20, "WIFI CONNECTED, NTP..");
   u8g2.sendBuffer();
 }
 
