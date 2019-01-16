@@ -24,6 +24,9 @@
 #include <HTTPClient.h>
 // #include <Int64String.h>
 
+#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
+#define TIME_TO_SLEEP  31 /* Time ESP32 will sleep 31s while 32s is the IP5306 chip delay time */
+
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include "ArduinoJson.h"
 
@@ -125,15 +128,28 @@ unsigned int increasePrefCounter () {
   return counter;
 }
 
+void setPinModes() {
+  // pinMode(BtnPin, INPUT_PULLUP);
+  pinMode(BtnPin, INPUT_PULLUP);
+  pinMode(LedPin, OUTPUT);
+  pinMode(BuzzerPin, OUTPUT);
+}
+
 void setup() {
+  setPinModes();
+  if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER) {
+    pureDeepSleep();
+  }
+
   ESP_LOGD(TAG, "0");
-  esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
   Serial.begin(115200);
   Wire.begin();
+
   // set_freq(240);
   ESP_LOGD(TAG, "1");
 
   u8g2.begin();
+  setPinModes(); // pin modes must be set after u8g2
   ESP_LOGD(TAG, "2");
   // u8g2.fillDisplay();
   // u8g2.setFont(u8g2_font_unifont_t_chinese2);
@@ -153,10 +169,6 @@ void setup() {
   // RW-mode (second parameter has to be false).
   // Note: Namespace name is limited to 15 chars.
 
-  // pinMode(BtnPin, INPUT_PULLUP);
-  pinMode(BtnPin, INPUT);
-  pinMode(LedPin, OUTPUT);
-  pinMode(BuzzerPin, OUTPUT);
 
   ESP_LOGD(TAG, "4");
   showSplashScreen();
@@ -187,8 +199,10 @@ void buzzer() {
 }
 
 void led() {
-  for (int i = 0; i < 20; i++) {
-    digitalWrite(LedPin, 1 - digitalRead(LedPin));
+  for (int i = 0; i < 10; i++) {
+    digitalWrite(LedPin, 1);
+    delay(250);
+    digitalWrite(LedPin, 0);
     delay(250);
   }
 }
@@ -564,24 +578,28 @@ void drawTime() {
   }
 }
 
+void pureDeepSleep() {
+  // https://esp32.com/viewtopic.php?t=3083
+  // esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_OFF);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_FAST_MEM, ESP_PD_OPTION_OFF);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_OFF);
+
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
+  adc_power_off();
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  esp_deep_sleep_start();
+  Serial.println("This will never be printed");
+}
+
 void deepSleep() {
   u8g2.clearBuffer();
   u8g2.drawStr(10, 30, "Deep sleep now...");
   u8g2.sendBuffer();
   delay(500);
   screenOffAnimation();
-  // https://esp32.com/viewtopic.php?t=3083
-  // esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
-  // esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_OFF);
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_FAST_MEM, ESP_PD_OPTION_OFF);
-  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_OFF);
-
-  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
-  // adc_power_off();
-  esp_sleep_enable_timer_wakeup(10L * 60L * 1000000L);
-  esp_deep_sleep_start();
-  Serial.println("This will never be printed");
+  pureDeepSleep();
 }
 
 void screenOffAnimation() {
