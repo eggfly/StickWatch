@@ -125,6 +125,7 @@ unsigned int increasePrefCounter () {
 
 void setup() {
   ESP_LOGD(TAG, "0");
+  esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
   Serial.begin(115200);
   Wire.begin();
   // set_freq(240);
@@ -547,7 +548,7 @@ void deepSleep() {
   delay(1000);
   screenOffAnimation();
   // esp_deep_sleep_enable_ext0_wakeup(35, LOW);
-  esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
+  // esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
   esp_deep_sleep_start();
   Serial.println("This will never be printed");
 }
