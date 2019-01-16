@@ -25,7 +25,7 @@
 // #include <Int64String.h>
 
 #define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP  31 /* Time ESP32 will sleep 31s while 32s is the IP5306 chip delay time */
+#define TIME_TO_SLEEP 8 /* Time ESP32 will sleep while 32s is the IP5306 chip delay time */
 
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include "ArduinoJson.h"
@@ -138,6 +138,7 @@ void setPinModes() {
 void setup() {
   setPinModes();
   if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER) {
+    led(true, 100);
     pureDeepSleep();
   }
 
@@ -173,7 +174,7 @@ void setup() {
   ESP_LOGD(TAG, "4");
   showSplashScreen();
   // buzzer();
-  led();
+  flashLed(1000);
 
   setupMPU9250();
 
@@ -198,12 +199,17 @@ void buzzer() {
   }
 }
 
-void led() {
-  for (int i = 0; i < 10; i++) {
+void led(boolean on, int milliseconds) {
+  digitalWrite(LedPin, on ? 1 : 0);
+  delay(milliseconds);
+}
+
+void flashLed(int milliseconds) {
+  for (int i = 0; i < milliseconds / 200; i++) {
     digitalWrite(LedPin, 1);
-    delay(250);
+    delay(100);
     digitalWrite(LedPin, 0);
-    delay(250);
+    delay(100);
   }
 }
 
@@ -532,7 +538,7 @@ void drawCursor() {
 
 void loop() {
   if (millis() - keepWakeUpTime > 60 * 1000) {
-    increasePrefCounter();
+    // increasePrefCounter();
     deepSleep();
   }
   if (digitalRead(BtnPin) == 1) {
