@@ -8,6 +8,7 @@
 #include <Wire.h>
 #endif
 
+#include "driver/adc.h"
 #include "esp_log.h"
 #include "esp_pm.h"
 #include <esp_sleep.h>
@@ -159,9 +160,9 @@ void setup() {
 
   ESP_LOGD(TAG, "4");
   showSplashScreen();
-  buzzer();
+  // buzzer();
   led();
-  
+
   setupMPU9250();
 
   wifiMulti.addAP(ssid, password);
@@ -567,10 +568,17 @@ void deepSleep() {
   u8g2.clearBuffer();
   u8g2.drawStr(10, 30, "Deep sleep now...");
   u8g2.sendBuffer();
-
-  delay(1000);
+  delay(500);
   screenOffAnimation();
+  // https://esp32.com/viewtopic.php?t=3083
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
+  // esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_SLOW_MEM, ESP_PD_OPTION_OFF);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_FAST_MEM, ESP_PD_OPTION_OFF);
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_OFF);
+  
+  // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
+  adc_power_off();
   esp_deep_sleep_start();
   Serial.println("This will never be printed");
 }
