@@ -10,7 +10,7 @@
 
 #include "esp_log.h"
 #include "esp_pm.h"
-#include <esp_deep_sleep.h>
+#include <esp_sleep.h>
 
 #include <Preferences.h>
 
@@ -21,18 +21,16 @@
 
 #include <WiFiMulti.h>
 #include <HTTPClient.h>
-#include <Int64String.h>
+// #include <Int64String.h>
 
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include "ArduinoJson.h"
-
-// #include "time.h"
-// #include <sys/time.h>
 
 static const char *TAG = "example";
 
 const char* ssid       = "MIWIFI8";
 const char* password   = "12345678";
+
 #define HUNDRED_NANO_SECONDS (1000*1000*10)
 const long  gmtOffset_sec = 3600 * 8;
 
@@ -47,7 +45,10 @@ MPU9250 IMU;
 #define SCREEN_HEIGHT 64
 
 #define BtnPin 35
-RTC_DATA_ATTR int bootCount = 0;
+#define LedPin 19
+#define BuzzerPin 26
+
+//RTC_DATA_ATTR int bootCount = 0;
 
 U8G2_SH1107_64X128_F_4W_HW_SPI u8g2(U8G2_R3, /* cs=*/ 14, /* dc=*/ 27, /* reset=*/ 33);
 
@@ -151,10 +152,16 @@ void setup() {
   // RW-mode (second parameter has to be false).
   // Note: Namespace name is limited to 15 chars.
 
-  pinMode(BtnPin, INPUT_PULLUP);
+  // pinMode(BtnPin, INPUT_PULLUP);
+  pinMode(BtnPin, INPUT);
+  pinMode(LedPin, OUTPUT);
+  pinMode(BuzzerPin, OUTPUT);
 
   ESP_LOGD(TAG, "4");
   showSplashScreen();
+  buzzer();
+  led();
+  
   setupMPU9250();
 
   wifiMulti.addAP(ssid, password);
@@ -163,10 +170,26 @@ void setup() {
   syncTimeFromWifi();
 
   //Increment boot number and print it every reboot
-  ++bootCount;
-  ESP_LOGI(TAG, "Boot count: %d", bootCount);
+  // ++bootCount;
+  // ESP_LOGI(TAG, "Boot count: %d", bootCount);
   //Print the wakeup reason for ESP32
   print_wakeup_reason();
+}
+
+void buzzer() {
+  for (int i = 0; i < 200; i++) {
+    digitalWrite(BuzzerPin, HIGH);
+    delayMicroseconds(20);
+    digitalWrite(BuzzerPin, LOW);
+    delayMicroseconds(980);
+  }
+}
+
+void led() {
+  for (int i = 0; i < 20; i++) {
+    digitalWrite(LedPin, 1 - digitalRead(LedPin));
+    delay(250);
+  }
 }
 
 bool isTimeOK = false;
@@ -236,7 +259,7 @@ void syncTimeByHttp() {
       tv.tv_usec = 0;
       settimeofday(&tv, NULL);
       printLocalTime();
-      Serial.println( int64String(c_time));
+      // Serial.println( int64String(c_time));
     }
   } else {
     Serial.printf("[HTTP] GET... failed, error: %s\n", http.errorToString(httpCode).c_str());
@@ -301,7 +324,7 @@ void setupMPU9250() {
       Serial.print("z-axis self test: gyration trim within : ");
       Serial.print(IMU.SelfTest[5], 1); Serial.println("% of factory value");
     }
-    Serial.print("MPU9250 acceleration and gyration self test done!");
+    Serial.println("MPU9250 acceleration and gyration self test done!");
 
     // Calibrate gyro and accelerometers, load biases in bias registers
     IMU.calibrateMPU9250(IMU.gyroBias, IMU.accelBias);
@@ -547,8 +570,7 @@ void deepSleep() {
 
   delay(1000);
   screenOffAnimation();
-  // esp_deep_sleep_enable_ext0_wakeup(35, LOW);
-  // esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
   esp_deep_sleep_start();
   Serial.println("This will never be printed");
 }
