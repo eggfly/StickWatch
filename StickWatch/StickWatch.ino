@@ -24,9 +24,6 @@
 #include <HTTPClient.h>
 // #include <Int64String.h>
 
-#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP 8 /* Time ESP32 will sleep while 32s is the IP5306 chip delay time */
-
 #define ARDUINOJSON_USE_LONG_LONG 1
 #include "ArduinoJson.h"
 
@@ -51,6 +48,14 @@ MPU9250 IMU;
 #define BtnPin 35
 #define LedPin 19
 #define BuzzerPin 26
+
+// ================ Power IC IP5306 ===================
+#define IP5306_ADDR           117
+#define IP5306_REG_SYS_CTL0   0x00
+#define IP5306_REG_READ1      0x71
+#define IP5306_REG_READ2      0x72
+#define CHARGE_FULL_BIT       3
+#define POWER_LOAD_BIT        2
 
 //RTC_DATA_ATTR int bootCount = 0;
 
@@ -137,14 +142,16 @@ void setPinModes() {
 
 void setup() {
   setPinModes();
+  // simply to sleep when power chip reboot
   if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER) {
-    led(true, 100);
+    led(true, 200);
     pureDeepSleep();
   }
 
   ESP_LOGD(TAG, "0");
   Serial.begin(115200);
-  Wire.begin();
+  Wire.begin(21, 22, 100000);
+  setPowerBoostKeepOn(true);
 
   // set_freq(240);
   ESP_LOGD(TAG, "1");
@@ -188,6 +195,16 @@ void setup() {
   // ESP_LOGI(TAG, "Boot count: %d", bootCount);
   //Print the wakeup reason for ESP32
   print_wakeup_reason();
+}
+
+void setPowerBoostKeepOn(bool en) {
+  Wire.beginTransmission(IP5306_ADDR);
+  Wire.write(IP5306_REG_SYS_CTL0);
+  if (en) Wire.write(0x37); // Set bit1: 1 enable 0 disable boost keep on
+  else Wire.write(0x35);    // 0x37 is default reg value
+  int error = Wire.endTransmission();
+  Serial.print("Wire.endTransmission result: ");
+  Serial.println(error);
 }
 
 void buzzer() {
@@ -299,6 +316,7 @@ void syncTimeByHttp() {
   }
   //disconnect WiFi as it's no longer needed
 }
+
 void printLocalTime() {
   struct tm timeinfo;
   if (!getLocalTime(&timeinfo)) {
@@ -307,16 +325,19 @@ void printLocalTime() {
   }
   Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
 }
+
 void showSplashScreen() {
   u8g2.clearBuffer();
   u8g2.drawStr(10, 20, "LOADING...");
   u8g2.sendBuffer();
 }
+
 void showConnectingWifi() {
   u8g2.clearBuffer();
   u8g2.drawStr(10, 20, "CONNECTING WIFI...");
   u8g2.sendBuffer();
 }
+
 void showWifiConnected() {
   u8g2.clearBuffer();
   u8g2.drawStr(10, 20, "WIFI CONNECTED, NTP..");
@@ -594,7 +615,6 @@ void pureDeepSleep() {
   // esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
   adc_power_off();
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   esp_deep_sleep_start();
   Serial.println("This will never be printed");
 }
