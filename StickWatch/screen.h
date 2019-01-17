@@ -1,7 +1,6 @@
 #ifndef _SCREEN_H_
 #define _SCREEN_H_
 
-
 #include <U8g2lib.h>
 
 #ifdef U8X8_HAVE_HW_SPI
@@ -11,13 +10,14 @@
 #include <Wire.h>
 #endif
 
-
 const float MAX_CURSOR_ACC = 16;
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 
 U8G2_SH1107_64X128_F_4W_HW_SPI u8g2(U8G2_R3, /* cs=*/ 14, /* dc=*/ 27, /* reset=*/ 33);
+
+#define FONT u8g2_font_wqy12_t_gb2312
 
 void showSplashScreen() {
   u8g2.clearBuffer();
@@ -67,8 +67,8 @@ void drawTime() {
     strftime(dateStringBuff, sizeof(dateStringBuff), "%Y-%m-%d %a", &timeinfo);
     strftime(timeStringBuff, sizeof(timeStringBuff), "%H:%M:%S", &timeinfo);
     // u8g2.setFont(u8g2_font_5x8_tf);
-    u8g2.drawStr(40, 33, dateStringBuff);
-    u8g2.drawStr(40, 43, timeStringBuff);
+    u8g2.drawStr(40, 30, dateStringBuff);
+    u8g2.drawStr(40, 40, timeStringBuff);
   }
 }
 
@@ -79,22 +79,23 @@ void drawSleepText() {
 }
 
 void drawHelloStickWatch() {
-  u8g2.drawStr(10, 10, "Hello,");
-  u8g2.drawStr(10, 20, "DIY Stick Watch!");
+  u8g2.drawStr(6, 6, "Hello,");
+  u8g2.drawStr(6, 16, "DIY Stick Watch!");
   u8g2.drawStr(70, 1, reason);
 }
 
 void drawBatteryStatus(bool isCharging, bool isChargeFull) {
-  u8g2.setFont(u8g2_font_5x7_mf);
+  u8g2.setFont(u8g2_font_wqy12_t_gb2312);
+  // u8g2.setFont(u8g2_font_5x7_mf);
   if (isCharging) {
-    u8g2.drawStr(1, 57, " CHARGING /");
+    u8g2.drawUTF8(1, 51, "充电中/");
   } else {
-    u8g2.drawStr(1, 57, "NO CHARGE /");
+    u8g2.drawUTF8(1, 51, "未充电/");
   }
   if (isChargeFull) {
-    u8g2.drawStr(62, 57, "FULL TANK!");
+    u8g2.drawUTF8(42, 51, "充满了!");
   } else {
-    u8g2.drawStr(62, 57, "NOT FULL ");
+    u8g2.drawUTF8(42, 51, "未充满");
   }
   u8g2.setFont(u8g2_font_6x10_mf);
 }
