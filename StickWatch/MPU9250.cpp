@@ -145,6 +145,18 @@ void MPU9250::initAK8963(float * destination)
   delay(10);
 }
 
+// eggfly added
+void MPU9250::setSleepEnabled(bool enabled) {
+    writeBit(MPU9250_ADDRESS, PWR_MGMT_1, PWR1_SLEEP_BIT, enabled);
+}
+
+// eggfly added
+void MPU9250::writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data) {
+    uint8_t b = readByte(devAddr, regAddr);
+    b = (data != 0) ? (b | (1 << bitNum)) : (b & ~(1 << bitNum));
+    writeByte(devAddr, regAddr, b);
+}
+
 void MPU9250::initMPU9250()
 {  
  // wake up device

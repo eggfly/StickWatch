@@ -167,6 +167,9 @@
 #define ZA_OFFSET_H        0x7D
 #define ZA_OFFSET_L        0x7E
 
+// eggfly added
+#define PWR1_SLEEP_BIT     6
+
 // Using the MPU-9250 breakout board, ADO is set to 0
 // Seven-bit device address is 110100 for ADO = 0 and 110101 for ADO = 1
 #define ADO 0
@@ -249,6 +252,8 @@ class MPU9250
     void writeByte(uint8_t, uint8_t, uint8_t);
     uint8_t readByte(uint8_t, uint8_t);
     void readBytes(uint8_t, uint8_t, uint8_t, uint8_t *);
+    void setSleepEnabled(bool enabled); // eggfly added
+    void writeBit(uint8_t devAddr, uint8_t regAddr, uint8_t bitNum, uint8_t data); // eggfly added
 };  // class MPU9250
 
 #endif // _MPU9250_H_
