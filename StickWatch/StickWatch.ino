@@ -18,7 +18,7 @@ void setup() {
   ESP_LOGD(TAG, "0");
   Serial.begin(115200);
   Wire.begin(21, 22, 100000);
-  setPowerBoostKeepOn(true);
+  setPowerBoostKeepOn(false);
 
   // set_freq(240);
   ESP_LOGD(TAG, "1");
@@ -40,7 +40,7 @@ void setup() {
   setupMPU9250();
   wifiMulti.addAP(ssid, password);
   wifiMulti.addAP("eggfly", "12345678");
-  syncTimeFromWifi();
+  // syncTimeFromWifi();
   print_wakeup_reason();
 }
 

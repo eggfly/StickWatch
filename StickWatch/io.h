@@ -6,7 +6,7 @@
 #define BuzzerPin 26
 
 void setPinModes() {
-  // pinMode(BtnPin, INPUT_PULLUP);
+  // pinMode(BtnPin, INPUT_PULLDOWN);
   pinMode(BtnPin, INPUT_PULLUP);
   pinMode(LedPin, OUTPUT);
   pinMode(BuzzerPin, OUTPUT);

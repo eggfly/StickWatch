@@ -53,7 +53,7 @@ void setup() {
   pinMode(BtnPin, INPUT);
   Serial.begin(115200);
   Wire.begin(21, 22, 100000);
-  setPowerBoostKeepOn(true);
+  setPowerBoostKeepOn(false);
 
   //Print the wakeup reason for ESP32
   print_wakeup_reason();
