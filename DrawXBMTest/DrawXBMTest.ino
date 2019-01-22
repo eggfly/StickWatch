@@ -9,6 +9,25 @@
 #include <Wire.h>
 #endif
 
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+uint8_t temprature_sens_read();
+//uint8_t g_phyFuns;
+
+#ifdef __cplusplus
+}
+#endif
+
+
+uint8_t temp_farenheit;
+float temp_celsius;
+
+char sensor_buf[64];
+
 #define full_width 128
 #define full_height 64
 static unsigned char full_bits[] = {
@@ -216,6 +235,8 @@ void u8g2_bitmap_full() {
     u8g2.drawStr(0, 0, "TRANSPARENT BITMAP");
     u8g2.setFont(u8g2_font_6x10_mf);
     u8g2.drawStr(0, 20, "TRANSPARENT BITMAP");
+    
+    u8g2.drawStr(0, 45, sensor_buf);
   }
   u8g2.setDrawColor(1); // White
   // u8g2.setDrawColor(0);// Black
@@ -242,7 +263,14 @@ void setup(void) {
 }
 
 void loop(void) {
+  temp_farenheit = temprature_sens_read();
+  temp_celsius = ( temp_farenheit - 32 ) / 1.8;
+  sprintf(sensor_buf, " T: %d F  %.2f C", temp_farenheit, temp_celsius);
+
   // picture loop
+  // lightness
+  u8g2.setContrast(32);
+  
   u8g2.clearBuffer();
   draw();
   u8g2.sendBuffer();
@@ -250,9 +278,9 @@ void loop(void) {
   // increase the state
   draw_state++;
 
-  // deley between each page
-  // delay(1000);
 
-  u8g2.setContrast(32);
+  // deley between each page
+  delay(1000);
+
 
 }
