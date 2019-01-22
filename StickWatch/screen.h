@@ -110,4 +110,11 @@ void screenOffAnimation() {
   }
 }
 
+void drawChipTemprature(uint8_t temp_farenheit) {
+  float temp_celsius = ( temp_farenheit - 32 ) / 1.8;
+  char sensor_buf[64];
+  sprintf(sensor_buf, "%.1f C", temp_celsius);
+  u8g2.drawStr(4, 40, sensor_buf);
+}
+
 #endif // _SCREEN_H_

@@ -10,24 +10,6 @@
 #endif
 
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-uint8_t temprature_sens_read();
-//uint8_t g_phyFuns;
-
-#ifdef __cplusplus
-}
-#endif
-
-
-uint8_t temp_farenheit;
-float temp_celsius;
-
-char sensor_buf[64];
-
 #define full_width 128
 #define full_height 64
 static unsigned char full_bits[] = {
@@ -263,10 +245,6 @@ void setup(void) {
 }
 
 void loop(void) {
-  temp_farenheit = temprature_sens_read();
-  temp_celsius = ( temp_farenheit - 32 ) / 1.8;
-  sprintf(sensor_buf, " T: %d F  %.2f C", temp_farenheit, temp_celsius);
-
   // picture loop
   // lightness
   u8g2.setContrast(32);

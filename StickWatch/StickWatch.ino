@@ -1,4 +1,5 @@
 #include "sensor.h"
+#include "temp_sensor.h"
 #include "io.h"
 #include "pm.h"
 #include "screen.h"
@@ -22,7 +23,11 @@ void setup() {
 
   // set_freq(240);
   ESP_LOGD(TAG, "1");
+
   u8g2.begin();
+  // lightness
+  u8g2.setContrast(32);
+
   setPinModes(); // pin modes must be set after u8g2
   ESP_LOGD(TAG, "2");
   // u8g2.fillDisplay();
@@ -50,6 +55,7 @@ unsigned long keepWakeUpTime = 0;
 unsigned long lastUpdateChargingTime = 0;
 bool isLastChargeFull = false;
 bool isLastCharging = false;
+uint8_t temp_farenheit = 0;
 
 void loop() {
   if (millis() - keepWakeUpTime > 60 * 1000) {
@@ -66,6 +72,7 @@ void loop() {
       lastUpdateChargingTime = millis();
       isLastChargeFull = isChargeFull();
       isLastCharging = isCharging();
+      temp_farenheit = temprature_sens_read();
     }
     drawBatteryStatus(isLastCharging, isLastChargeFull);
     // u8g2.setFont(u8g2_font_6x10_tf);
@@ -74,6 +81,7 @@ void loop() {
       drawTime();
     }
     drawCursor();
+    drawChipTemprature(temp_farenheit);
     u8g2.sendBuffer();
   } else {
     unsigned long currTime = millis();

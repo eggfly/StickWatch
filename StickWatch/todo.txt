@@ -1,0 +1,6 @@
+* sensor
+* brightness
+* Li-poly battery
+* shell & web server
+* wifi passport provider
+* android app
