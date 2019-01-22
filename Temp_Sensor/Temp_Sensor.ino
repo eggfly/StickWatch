@@ -8,6 +8,7 @@
 void setup() {
   // put your setup code here, to run once:
 
+  Serial.begin(115200);
 }
 
 int read_temp() {
@@ -26,6 +27,12 @@ int read_temp() {
 }
 
 void loop() {
-  read_temp();
+  int temp_farenheit = read_temp();
+  float temp_celsius = ( temp_farenheit - 32 ) / 1.8;
+  Serial.print("Temp onBoard ");
+  Serial.print(temp_farenheit);
+  Serial.print("°F ");
+  Serial.print(temp_celsius);
+  Serial.println("°C");
   delay(2000);
 }

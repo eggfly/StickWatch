@@ -4,3 +4,4 @@
 * shell & web server
 * wifi passport provider
 * android app
+* tcpip_adapter_get_ip_info ip info
