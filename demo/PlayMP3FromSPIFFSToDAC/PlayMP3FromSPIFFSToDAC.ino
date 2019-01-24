@@ -40,7 +40,7 @@ void setup()
   // pno_cs from https://ccrma.stanford.edu/~jos/pasp/Sound_Examples.html
   file = new AudioFileSourceSPIFFS("/pno-cs.mp3");
   id3 = new AudioFileSourceID3(file);
-  out = new AudioOutputI2S(0, 2); // Output to builtInDAC
+  out = new AudioOutputI2S(0, 1); // Output to builtInDAC
   // out = new AudioOutputI2SNoDAC(0);
   out->SetOutputModeMono(true);
   // out->setGain(4);
