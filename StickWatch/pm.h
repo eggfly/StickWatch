@@ -41,7 +41,7 @@ void pureDeepSleep() {
   IMU.setSleepEnabled(true);
   delay(100);
   adc_power_off();
-  // esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
+  esp_sleep_enable_ext0_wakeup(GPIO_NUM_35, LOW); //1 = High, 0 = Low
   esp_deep_sleep_start();
   Serial.println("This will never be printed");
 }

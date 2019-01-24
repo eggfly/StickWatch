@@ -68,7 +68,6 @@ void setupMPU9250() {
 }
 
 void readMPU9250() {
-
   // If intPin goes high, all data registers have new data
   // On interrupt, check if data ready interrupt
   if (IMU.readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01)
@@ -131,10 +130,8 @@ void readMPU9250() {
   // Serial print and/or display at 0.5 s rate independent of data rates
   IMU.delt_t = millis() - IMU.count;
 
-  if (IMU.delt_t > 100)
-  {
-    if (SerialDebugMPU9250)
-    {
+  if (IMU.delt_t > 20) {
+    if (SerialDebugMPU9250) {
       Serial.print("ax = ");
       Serial.print((int)1000 * IMU.ax);
       Serial.print(" ay = ");
@@ -198,6 +195,6 @@ void readMPU9250() {
     IMU.sumCount = 0;
     IMU.sum = 0;
 
-  } // if (IMU.delt_t > 100)
+  } // if (IMU.delt_t > 20)
 }
 #endif // _SENSOR_H_

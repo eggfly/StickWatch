@@ -45,7 +45,7 @@ void setup() {
   setupMPU9250();
   wifiMulti.addAP(ssid, password);
   wifiMulti.addAP("eggfly", "12345678");
-  // syncTimeFromWifi();
+  syncTimeFromWifi();
   print_wakeup_reason();
 }
 
@@ -55,10 +55,16 @@ unsigned long keepWakeUpTime = 0;
 unsigned long lastUpdateChargingTime = 0;
 bool isLastChargeFull = false;
 bool isLastCharging = false;
-uint8_t temp_farenheit = 0;
+int temp_farenheit = 0;
+
+unsigned long fps_prev_time;
 
 void loop() {
-  if (millis() - keepWakeUpTime > 60 * 1000) {
+  unsigned long curr_time = millis();
+  Serial.print("time delta: ");
+  Serial.println(curr_time - fps_prev_time);
+  fps_prev_time = curr_time;
+  if (curr_time - keepWakeUpTime > 60 * 1000) {
     // increasePrefCounter();
     deepSleep();
   }
@@ -67,14 +73,16 @@ void loop() {
     // u8x8.setInverseFont(1);
     readMPU9250();
     u8g2.clearBuffer();
-    drawHelloStickWatch();
+    drawScreenBackground();
+    // drawHelloStickWatch();
     if (millis() - lastUpdateChargingTime > 5000) {
       lastUpdateChargingTime = millis();
       isLastChargeFull = isChargeFull();
       isLastCharging = isCharging();
-      temp_farenheit = temprature_sens_read();
+      temp_farenheit = read_temp();
     }
-    drawBatteryStatus(isLastCharging, isLastChargeFull);
+    // TODO
+    drawBatteryStatusWithFont(isLastCharging, isLastChargeFull);
     // u8g2.setFont(u8g2_font_6x10_tf);
     // u8g2_font_4x6_tf, u8g2_font_5x7_tf, u8g2_font_5x8_tf
     if (isTimeOK) {
