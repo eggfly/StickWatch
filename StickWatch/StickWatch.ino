@@ -19,7 +19,7 @@ void setup() {
   ESP_LOGD(TAG, "0");
   Serial.begin(115200);
   Wire.begin(21, 22, 100000);
-  setPowerBoostKeepOn(false);
+  setPowerBoostKeepOn(true);
 
   // set_freq(240);
   ESP_LOGD(TAG, "1");
