@@ -10,10 +10,6 @@
 #include <Wire.h>
 #endif
 
-const float MAX_CURSOR_ACC = 16;
-
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 64
 
 U8G2_SH1107_64X128_F_4W_HW_SPI u8g2(U8G2_R3, /* cs=*/ 14, /* dc=*/ 27, /* reset=*/ 33);
 
@@ -136,9 +132,13 @@ void drawScreenBackground() {
 }
 
 
-void showSplashScreen() {
+void showSplashScreen(boolean isReset) {
   u8g2.clearBuffer();
-  u8g2.drawStr(10, 20, "LOADING...");
+  if (isReset) {
+    u8g2.drawStr(10, 20, "INITIALIZING...");
+  } else {
+    u8g2.drawStr(10, 20, "LOADING...");
+  }
   u8g2.sendBuffer();
 }
 
@@ -154,25 +154,10 @@ void showWifiConnected() {
   u8g2.sendBuffer();
 }
 
-void drawCursor() {
-  int cursor_x = SCREEN_WIDTH / 2 + (int)(SCREEN_WIDTH / 2 * (IMU.roll / MAX_CURSOR_ACC));
-  int cursor_y = SCREEN_HEIGHT / 2 - (int)(SCREEN_HEIGHT / 2 * (IMU.pitch / MAX_CURSOR_ACC));
-  if (cursor_x < 0 ) {
-    cursor_x = 0;
-  }
-  if (cursor_x >= SCREEN_WIDTH) {
-    cursor_x = SCREEN_WIDTH - 1;
-  }
-  if (cursor_y < 0) {
-    cursor_y = 0;
-  }
-  if (cursor_y >= SCREEN_HEIGHT - 1) {
-    cursor_y = SCREEN_HEIGHT - 2;
-  }
+void drawCursor(uint8_t cursor_x, uint8_t cursor_y) {
   u8g2.drawTriangle(cursor_x, cursor_y, cursor_x, cursor_y + 9, cursor_x + 6, cursor_y + 6);
   u8g2.drawLine(cursor_x + 2, cursor_y + 3, cursor_x + 4, cursor_y + 11);
 }
-
 
 void drawTime() {
   struct tm timeinfo;

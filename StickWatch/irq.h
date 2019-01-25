@@ -4,9 +4,8 @@
 #include "config.h"
 
 // declare key event callback function
-void onKeyDown();
-void onKeyUp();
-
+void onKeyDown(uint8_t x, uint8_t y);
+void onKeyUp(uint8_t x, uint8_t y);
 
 static volatile int __button_irq = 0;
 
@@ -23,22 +22,22 @@ void initIRQ() {
 
 static int __button_down = 0;
 static
-void __handleButtonIRQ() {
+void __handleButtonIRQ(uint8_t x, uint8_t y) {
   int down = digitalRead(BtnPin) == LOW;
   if (down && !__button_down) {
-    onKeyDown();
+    onKeyDown(x, y);
   }
   if (!down && __button_down) {
-    onKeyUp();
+    onKeyUp(x, y);
   }
   __button_down = down;
 }
 
 static
-void handleIRQ() {
+void handleIRQ(uint8_t x, uint8_t y) {
   if (__button_irq) {
     __button_irq = 0;
-    __handleButtonIRQ();
+    __handleButtonIRQ(x, y);
   }
 }
 

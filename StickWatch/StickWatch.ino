@@ -40,13 +40,16 @@ void setup() {
   u8g2.setFontPosTop();
   // u8g2.setFontDirection(0);
   ESP_LOGD(TAG, "3");
-  showSplashScreen();
+  boolean isBootFromReset = wakeup_reason == ESP_SLEEP_WAKEUP_UNDEFINED;
+  showSplashScreen(isBootFromReset);
   // buzzer();
-  flashLed(1000);
+  // flashLed(1000);
   setupMPU9250();
   wifiMulti.addAP(ssid, password);
   wifiMulti.addAP("eggfly", "12345678");
-  syncTimeFromWifi();
+  if (isBootFromReset) {
+    syncTimeFromWifi();
+  }
   print_wakeup_reason();
   // attachButtonEvent();
   initIRQ();
@@ -62,6 +65,15 @@ int temp_farenheit = 0;
 
 unsigned long fps_prev_time;
 
+uint8_t cursor_x, cursor_y;
+
+typedef enum {
+  PAGE_HOME,    // watch home page
+  PAGE_GAME,    // watch game page
+} app_page_t;
+
+app_page_t app_curr_page = PAGE_HOME;
+
 void loop() {
   // lost frame detect
   unsigned long curr_time = millis();
@@ -73,8 +85,8 @@ void loop() {
   }
   fps_prev_time = curr_time;
 
-  // auto sleep
-  if (curr_time - keepWakeUpTime > 60 * 1000) {
+  // auto sleep only when not charging
+  if (!isLastCharging && curr_time - keepWakeUpTime > 60 * 1000) {
     // increasePrefCounter();
     deepSleep();
   }
@@ -83,23 +95,12 @@ void loop() {
     // u8x8.setInverseFont(1);
     readMPU9250();
     u8g2.clearBuffer();
-    drawScreenBackground();
-    // drawHelloStickWatch();
-    if (millis() - lastUpdateChargingTime > 5000) {
-      lastUpdateChargingTime = millis();
-      isLastChargeFull = isChargeFull();
-      isLastCharging = isCharging();
-      temp_farenheit = read_temp();
+    // render current page
+    switch (app_curr_page) {
+      case PAGE_HOME: render_page_home(); break;
+      case PAGE_GAME: render_page_game(); break;
+      default: break;
     }
-    // TODO
-    drawBatteryStatusWithFont(isLastCharging, isLastChargeFull);
-    // u8g2.setFont(u8g2_font_6x10_tf);
-    // u8g2_font_4x6_tf, u8g2_font_5x7_tf, u8g2_font_5x8_tf
-    if (isTimeOK) {
-      drawTime();
-    }
-    drawCursor();
-    drawChipTemprature(temp_farenheit);
     u8g2.sendBuffer();
   } else {
     unsigned long currTime = millis();
@@ -113,7 +114,32 @@ void loop() {
     }
   }
 
-  handleIRQ();
+  handleIRQ(cursor_x, cursor_y);
+}
+
+void render_page_home() {
+  drawScreenBackground();
+  // drawHelloStickWatch();
+  if (millis() - lastUpdateChargingTime > 1000) {
+    lastUpdateChargingTime = millis();
+    isLastChargeFull = isChargeFull();
+    isLastCharging = isCharging();
+    temp_farenheit = read_temp();
+  }
+  // TODO
+  drawBatteryStatusWithFont(isLastCharging, isLastChargeFull);
+  // u8g2.setFont(u8g2_font_6x10_tf);
+  // u8g2_font_4x6_tf, u8g2_font_5x7_tf, u8g2_font_5x8_tf
+  if (isTimeOK) {
+    drawTime();
+  }
+  get_cursor_position(&cursor_x, &cursor_y);
+  drawChipTemprature(temp_farenheit);
+  // must draw cursor in the end
+  drawCursor(cursor_x, cursor_y);
+}
+
+void render_page_game() {
 }
 
 void deepSleep() {
@@ -123,10 +149,14 @@ void deepSleep() {
   pureDeepSleep();
 }
 
-void onKeyUp() {
-  Serial.println("app: key up");
+void onKeyUp(uint8_t x, uint8_t y) {
+  Serial.printf("app: key up: x=%d, y=%d\n", x, y);
+  if (0 <= x && x < 24 && 46 < y && y < SCREEN_HEIGHT) {
+    Serial.println("app: navigating to PAGE_GAME!");
+    app_curr_page = PAGE_GAME;
+  }
 }
 
-void onKeyDown() {
-  Serial.println("app: key down");
+void onKeyDown(uint8_t x, uint8_t y) {
+  Serial.printf("app: key down: x=%d, y=%d\n", x, y);
 }

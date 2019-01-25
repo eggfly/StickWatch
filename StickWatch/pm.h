@@ -17,7 +17,9 @@
 
 //RTC_DATA_ATTR int bootCount = 0;
 
+esp_sleep_wakeup_cause_t wakeup_reason;
 char * reason;
+
 char REASON_UNDEFINED[] = "UNDEFINED";
 char REASON_ALL[] = "ALL";
 char REASON_EXT0[] = "RTC_IO";
@@ -51,7 +53,6 @@ void pureDeepSleep() {
   has been awaken from sleep
 */
 void print_wakeup_reason() {
-  esp_sleep_wakeup_cause_t wakeup_reason;
   wakeup_reason = esp_sleep_get_wakeup_cause();
   switch (wakeup_reason) {
     case ESP_SLEEP_WAKEUP_UNDEFINED : ESP_LOGI(TAG, "In case of deep sleep, reset was not caused by exit from deep sleep"); reason = REASON_UNDEFINED; break;

@@ -2,6 +2,7 @@
 #define _SENSOR_H_
 
 #include "MPU9250.h"
+#include "config.h"
 #include "quaternionFilters.h"
 
 
@@ -10,7 +11,6 @@
 #define SerialDebugCalibrate false  // Set to true to get Serial output for debugging
 
 MPU9250 IMU;
-
 
 void setupMPU9250() {
   byte c = IMU.readByte(MPU9250_ADDRESS, WHO_AM_I_MPU9250);
@@ -197,4 +197,26 @@ void readMPU9250() {
 
   } // if (IMU.delt_t > 20)
 }
+
+void get_cursor_position(uint8_t *x, uint8_t *y) {
+  int cursor_x = SCREEN_WIDTH / 2 + (int)(SCREEN_WIDTH / 2 * (IMU.roll / MAX_CURSOR_ACC));
+  int cursor_y = SCREEN_HEIGHT / 2 - (int)(SCREEN_HEIGHT / 2 * (IMU.pitch / MAX_CURSOR_ACC));
+
+  if (cursor_x < 0 ) {
+    cursor_x = 0;
+  }
+  if (cursor_x >= SCREEN_WIDTH) {
+    cursor_x = SCREEN_WIDTH - 1;
+  }
+  if (cursor_y < 0) {
+    cursor_y = 0;
+  }
+  if (cursor_y >= SCREEN_HEIGHT - 1) {
+    cursor_y = SCREEN_HEIGHT - 2;
+  }
+
+  *x = cursor_x;
+  *y = cursor_y;
+}
+
 #endif // _SENSOR_H_
