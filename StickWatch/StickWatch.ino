@@ -47,6 +47,7 @@ void setup() {
   wifiMulti.addAP("eggfly", "12345678");
   syncTimeFromWifi();
   print_wakeup_reason();
+  attachButtonEvent();
 }
 
 
@@ -60,15 +61,22 @@ int temp_farenheit = 0;
 unsigned long fps_prev_time;
 
 void loop() {
+  // lost frame detect
   unsigned long curr_time = millis();
-  Serial.print("time delta: ");
-  Serial.println(curr_time - fps_prev_time);
+  unsigned long delta = curr_time - fps_prev_time;
+  if (delta > 20) {
+    Serial.print("some frames lost, time delta: ");
+    Serial.print(delta);
+    Serial.println("ms");
+  }
   fps_prev_time = curr_time;
+
+  // auto sleep
   if (curr_time - keepWakeUpTime > 60 * 1000) {
     // increasePrefCounter();
     deepSleep();
   }
-  if (digitalRead(BtnPin) == 1) {
+  if (digitalRead(BtnPin) == HIGH) {
     powerOffButtonTime = 0;
     // u8x8.setInverseFont(1);
     readMPU9250();
@@ -109,4 +117,12 @@ void deepSleep() {
   delay(500);
   screenOffAnimation();
   pureDeepSleep();
+}
+
+void onKeyUp() {
+  Serial.println("app: key up");
+}
+
+void onKeyDown() {
+  Serial.println("app: key down");
 }

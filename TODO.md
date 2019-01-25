@@ -8,3 +8,6 @@
 * m5stack play midi or mp3 online
 * change new IP5306
 * bluetooth and android app
+* knock on and action: it hurts, go so sleep, etc.
+* configu wifi by bluetooth and store known ssid and password
+* no known wifi found then quick ignore
