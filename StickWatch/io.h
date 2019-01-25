@@ -1,9 +1,7 @@
 #ifndef _IO_H_
 #define _IO_H_
 
-#define BtnPin 35
-#define LedPin 19
-#define BuzzerPin 26
+#include "config.h"
 
 portMUX_TYPE mux = portMUX_INITIALIZER_UNLOCKED;
 volatile int interruptCounter = 0;
@@ -13,13 +11,13 @@ void onKeyDown();
 void onKeyUp();
 
 void setPinModes() {
-  // pinMode(BtnPin, INPUT_PULLDOWN);
-  // m5stick其实硬件上自带了 外部上拉电阻，貌似可以不要下面这行
+  // pinMode(BtnPin, INPUT_PULLDOWN);  // m5stick其实硬件上自带了 外部上拉电阻，貌似可以不要下面这行
   pinMode(BtnPin, INPUT_PULLUP);
   pinMode(LedPin, OUTPUT);
   pinMode(BuzzerPin, OUTPUT);
 }
 
+/**
 void IRAM_ATTR handle_btn_isr() {
   // TODO need mutex?
   //portENTER_CRITICAL_ISR(&mux);
@@ -37,6 +35,7 @@ void IRAM_ATTR handle_btn_isr() {
 void attachButtonEvent() {
   attachInterrupt(digitalPinToInterrupt(BtnPin), handle_btn_isr, CHANGE);
 }
+*/
 
 void buzzer() {
   for (int i = 0; i < 200; i++) {

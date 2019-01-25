@@ -6,6 +6,9 @@ static const char *TAG = "example";
 const char* ssid       = "MIWIFI8";
 const char* password   = "12345678";
 
+#define BtnPin 35
+#define LedPin 19
+#define BuzzerPin 26
 
 #define HUNDRED_NANO_SECONDS (1000*1000*10)
 const long  gmtOffset_sec = 3600 * 8;

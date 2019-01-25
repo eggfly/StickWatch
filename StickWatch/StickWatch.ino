@@ -1,5 +1,6 @@
 #include "sensor.h"
 #include "temp_sensor.h"
+#include "irq.h"
 #include "io.h"
 #include "pm.h"
 #include "screen.h"
@@ -47,7 +48,8 @@ void setup() {
   wifiMulti.addAP("eggfly", "12345678");
   syncTimeFromWifi();
   print_wakeup_reason();
-  attachButtonEvent();
+  // attachButtonEvent();
+  initIRQ();
 }
 
 
@@ -110,6 +112,8 @@ void loop() {
       deepSleep();
     }
   }
+
+  handleIRQ();
 }
 
 void deepSleep() {
