@@ -107,8 +107,11 @@ class GamePage: public Page {
 
 class BashPage: public Page {
   public:
-    float scroll_y = -SCREEN_HEIGHT; // stay for a screen time
+    static const int ReservedScrollY = -SCREEN_HEIGHT / 3;
+    float scroll_y = ReservedScrollY; // stay for 1/3 screen time
+    int calculated_max_height = 0;
     virtual void onDraw();
+    virtual void onKeyUp(uint8_t x, uint8_t y);
 };
 
 class Ball {
@@ -166,24 +169,69 @@ void GamePage::onDraw() {
   ball.flyAsTimeGoesBy();
 }
 
+void BashPage::onKeyUp(uint8_t x, uint8_t y) {
+    Page::onKeyUp(x, y);
+    this->scroll_y = ReservedScrollY;
+}
+
 void BashPage::onDraw() {
-  scroll_y += 0.04;
-  float stay_scroll_y = 0;
-  if (scroll_y >= 0) {
-    stay_scroll_y = scroll_y;
+  this->scroll_y += 0.075; // scroll speed
+  Serial.printf("var: %f\n", scroll_y);
+  float stay_scroll_y;
+  if (this->scroll_y < 0) {
+    // 开始滚动之前停留一段时间
+    stay_scroll_y = 0;
+  } else if (this->scroll_y + SCREEN_HEIGHT > calculated_max_height) {
+    // 滚动到底停留一段时间
+    stay_scroll_y = calculated_max_height - SCREEN_HEIGHT;
+    Serial.printf("var3\n");
+  } else {
+    stay_scroll_y = this->scroll_y;
+  }
+  if (this->calculated_max_height != 0 && scroll_y + SCREEN_HEIGHT + ReservedScrollY >= calculated_max_height) {
+    Serial.printf("var1: %f\n", scroll_y + SCREEN_HEIGHT + ReservedScrollY);
+    this->scroll_y = ReservedScrollY;
   }
   u8g2.setFont(u8g2_font_wqy12_t_gb2312);  // all glyphs available
   u8g2.drawUTF8(30, -stay_scroll_y, "程序员老黄历");
   int title_height = 13;
   int font_height = 13;
-  u8g2.drawUTF8(1, 20 - stay_scroll_y, " 宜 ");
-  u8g2.drawHLine(0, title_height - scroll_y, SCREEN_WIDTH - 1);
-  u8g2.drawHLine(0, 38 - stay_scroll_y, SCREEN_WIDTH - 1);
+  int current_y_with_scroll = title_height - stay_scroll_y;
+  u8g2.drawHLine(0, current_y_with_scroll, SCREEN_WIDTH - 1);
+  current_y_with_scroll++;
+  u8g2.drawUTF8(1, current_y_with_scroll, "2019年1月25日 星期五");
+  current_y_with_scroll += font_height;
+  u8g2.drawHLine(0, current_y_with_scroll, SCREEN_WIDTH - 1);
+  u8g2.drawUTF8(1, current_y_with_scroll + 5, " 宜 ");
   // draw vertical line
-  u8g2.drawLine(26, title_height - stay_scroll_y, 26, SCREEN_HEIGHT - 1);
-  u8g2.drawUTF8(60, title_height + 1 - stay_scroll_y, "重构 代码质量得到提高");
-  u8g2.drawUTF8(60, title_height + 1 + font_height - stay_scroll_y, "加班 晚上的精神是最好");
-  u8g2.drawUTF8(1, 45 - stay_scroll_y, "不宜");
+  int vertical_line_y0 = current_y_with_scroll > 0 ? current_y_with_scroll : 0;
+  u8g2.drawLine(26, vertical_line_y0, 26, SCREEN_HEIGHT - 1);
+  current_y_with_scroll++; // add one pixel
+  u8g2.drawUTF8(28, current_y_with_scroll, "/* 重构 */");
+  current_y_with_scroll += font_height;
+  u8g2.drawUTF8(28, current_y_with_scroll, "代码质量得到提高");
+  current_y_with_scroll += font_height;
+  u8g2.drawUTF8(28, current_y_with_scroll, "/* 加班 */");
+  current_y_with_scroll += font_height;
+  u8g2.drawUTF8(28, current_y_with_scroll, "晚上的精神最好");
+  current_y_with_scroll += font_height;
+  u8g2.drawHLine(0, current_y_with_scroll, SCREEN_WIDTH - 1);
+  current_y_with_scroll++;
+  u8g2.drawUTF8(1, current_y_with_scroll + 5, "不宜");
+  u8g2.drawUTF8(28, current_y_with_scroll, "/* 开会 */");
+  current_y_with_scroll += font_height;
+  u8g2.drawUTF8(28, current_y_with_scroll, "小心被背黑锅");
+  current_y_with_scroll += font_height;
+  u8g2.drawUTF8(28, current_y_with_scroll, "/* 打DOTA */");
+  current_y_with_scroll += font_height;
+  u8g2.drawUTF8(28, current_y_with_scroll, "你会被虐的很惨");
+  current_y_with_scroll += font_height;
+  u8g2.drawHLine(0, current_y_with_scroll, SCREEN_WIDTH - 1);
+  current_y_with_scroll ++; // last horizontal line
+  if (current_y_with_scroll > this->calculated_max_height) {
+    this->calculated_max_height = current_y_with_scroll;
+    Serial.printf("update calculated max height: %d\n", this->calculated_max_height);
+  }
   u8g2.setFont(NORMAL_FONT);
 }
 
