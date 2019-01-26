@@ -12,4 +12,4 @@
 * configu wifi by bluetooth and store known ssid and password
 * no known wifi found then quick ignore
 * 考虑回到home的交互(重置加速度传感器)? 快速按三下按钮?
-
+* wifi connect result and not wait

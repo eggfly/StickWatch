@@ -19,6 +19,8 @@ const float MAX_CURSOR_ACC = 12;
 #define HUNDRED_NANO_SECONDS (1000*1000*10)
 const long  gmtOffset_sec = 3600 * 8;
 
+#define NORMAL_FONT u8g2_font_6x10_mf
+
 // static const char *TAG = "example";
 // program internal config end
 

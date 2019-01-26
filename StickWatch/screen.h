@@ -195,7 +195,7 @@ unsigned int battery_ui_update_time = 0;
 void drawBatteryStatusWithFont(bool isCharging, bool isChargeFull) {
   u8g2.setFont(battery_7x12);
   char * batteryIndexStr;
-  if (isCharging) {
+  if (isCharging && !isChargeFull) {
     // animation speed control
     unsigned long now = millis();
     if (now - battery_ui_update_time > 250) {
@@ -213,11 +213,15 @@ void drawBatteryStatusWithFont(bool isCharging, bool isChargeFull) {
       case 4: batteryIndexStr = "4"; break;
       default: batteryIndexStr = "4"; break;
     }
+  } else if (isChargeFull) {
+    // charging and charge full!
+    batteryIndexStr = "4";
   } else {
+    // TODO: not charging
     batteryIndexStr = "3";
   }
   u8g2.drawStr(115, 0, batteryIndexStr);
-  u8g2.setFont(u8g2_font_6x10_mf);
+  u8g2.setFont(NORMAL_FONT);
 }
 
 void drawBatteryStatus(bool isCharging, bool isChargeFull) {
@@ -233,7 +237,7 @@ void drawBatteryStatus(bool isCharging, bool isChargeFull) {
   } else {
     u8g2.drawUTF8(42, 51, "未充满");
   }
-  u8g2.setFont(u8g2_font_6x10_mf);
+  u8g2.setFont(NORMAL_FONT);
 }
 
 void screenOffAnimation() {
