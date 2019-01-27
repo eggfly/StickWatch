@@ -8,6 +8,8 @@
 #include "network.h"
 #include "http_requests.h"
 #include "utils.h"
+#include "page.h"
+#include "pref_page.h"
 
 void setup() {
   setPinModes();
@@ -63,12 +65,6 @@ unsigned long fps_prev_time;
 
 uint8_t cursor_x, cursor_y;
 
-class Page {
-  public:
-    virtual void onKeyDown(uint8_t x, uint8_t y) {};
-    virtual void onKeyUp(uint8_t x, uint8_t y);
-    virtual void onDraw() {};
-};
 
 class HomePage: public Page {
   public:
@@ -142,8 +138,9 @@ GamePage gamePage;
 Ball ball;
 
 BashPage bashPage;
+PrefPage prefPage;
 
-Page * currentPage = & homePage;
+Page *currentPage = &homePage;
 
 void HomePage::onKeyUp(uint8_t x, uint8_t y) {
   Serial.printf("HomePage: key up: x=%d, y=%d\n", x, y);
@@ -153,6 +150,9 @@ void HomePage::onKeyUp(uint8_t x, uint8_t y) {
   } else if (55 <= x && x <= 76 && 46 < y && y < SCREEN_HEIGHT) {
     Serial.println("navigating to BashPage!");
     currentPage = &bashPage;
+  } else if (103 <= x && x <= SCREEN_WIDTH && 46 < y && y < SCREEN_HEIGHT) {
+    Serial.println("navigating to PrefPage!");
+    currentPage = &prefPage;
   }
 }
 
@@ -170,8 +170,8 @@ void GamePage::onDraw() {
 }
 
 void BashPage::onKeyUp(uint8_t x, uint8_t y) {
-    Page::onKeyUp(x, y);
-    this->scroll_y = ReservedScrollY;
+  Page::onKeyUp(x, y);
+  this->scroll_y = ReservedScrollY;
 }
 
 void BashPage::onDraw() {

@@ -15,10 +15,19 @@ void setPinModes() {
   pinMode(BtnPin, INPUT_PULLUP);
   pinMode(LedPin, OUTPUT);
   pinMode(BuzzerPin, OUTPUT);
+
+  pinMode(SensorPin, INPUT);
+  // analogReadResolution(12); // no need
+}
+
+void getBatteryVoltage(float *batteryVoltage, int *dacValue) {
+  int value = analogRead(SensorPin);
+  *dacValue = value;
+  *batteryVoltage = (20.0 + 68.0) / 68.0 * 3.3 * value / 4096.0;
 }
 
 /**
-void IRAM_ATTR handle_btn_isr() {
+  void IRAM_ATTR handle_btn_isr() {
   // TODO need mutex?
   //portENTER_CRITICAL_ISR(&mux);
   if (digitalRead(BtnPin) == LOW) {
@@ -30,11 +39,11 @@ void IRAM_ATTR handle_btn_isr() {
   }
   interruptCounter++;
   //portEXIT_CRITICAL_ISR(&mux);
-}
+  }
 
-void attachButtonEvent() {
+  void attachButtonEvent() {
   attachInterrupt(digitalPinToInterrupt(BtnPin), handle_btn_isr, CHANGE);
-}
+  }
 */
 
 void buzzer() {
