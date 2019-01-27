@@ -14,6 +14,7 @@ const float MAX_CURSOR_ACC = 12;
 #define BuzzerPin 26
 
 #define BatterySensorPin 34
+#define SamplesCount 20
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64

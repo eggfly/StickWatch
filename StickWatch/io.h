@@ -21,7 +21,11 @@ void setPinModes() {
 }
 
 void readBatteryVoltage(float *batteryVoltage, int *dacValue) {
-  int value = analogRead(BatterySensorPin);
+  int sum = 0;
+  for (int i = 0; i < SamplesCount; i++) {
+    sum + = analogRead(BatterySensorPin);
+  }
+  int value = sum / SamplesCount;
   *dacValue = value;
   *batteryVoltage = (20.0 + 68.0) / 68.0 * 3.3 * value / 4096.0;
 }
