@@ -2,8 +2,8 @@
 #define _CONFIG_H_
 
 // user configurable variables start
-const char* ssid       = "MIWIFI8";
-const char* password   = "12345678";
+const char* BUILTIN_WIFI_SSID      = "eggfly";
+const char* BUILTIN_WIFI_PASSWORD  = "12345678";
 // 光标敏感度
 const float MAX_CURSOR_ACC = 12;
 // user configurable variables end

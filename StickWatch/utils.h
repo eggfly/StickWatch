@@ -5,14 +5,37 @@
 
 #include <Preferences.h>
 
+#define PreferenceNamespace "my-app"
+#define PrefNameWifi "wifi"
+
 void log(char * str) {
   Serial.print(millis()); Serial.print(":"); Serial.println(str);
 }
 
+String getWifiPref() {
+  Preferences preferences;
+  preferences.begin(PreferenceNamespace, true);
+  String wifiStr = preferences.getString(PrefNameWifi, "");
+  // Print the counter to Serial Monitor
+  Serial.print("Current wifi value: ");
+  Serial.println(wifiStr);
+  preferences.end();
+  return wifiStr;
+}
+
+size_t saveWifiPref(String wifiStr) {
+  Preferences preferences;
+  preferences.begin(PreferenceNamespace, false);
+  size_t ret = preferences.putString(PrefNameWifi, "");
+  // Print the counter to Serial Monitor
+  Serial.print("Save wifi value: "); Serial.print(wifiStr);  Serial.print(", ret:"); Serial.println(ret);
+  preferences.end();
+  return ret;
+}
 
 unsigned int increasePrefCounter() {
   Preferences preferences;
-  preferences.begin("my-app", false);
+  preferences.begin(PreferenceNamespace, false);
   unsigned int counter = preferences.getUInt("counter", 0);
   // Print the counter to Serial Monitor
   Serial.printf("Current counter value: %u\n", counter);

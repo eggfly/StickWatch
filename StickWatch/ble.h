@@ -35,10 +35,12 @@ class MyCallbacks: public BLECharacteristicCallbacks {
       if (rxValue.length() > 0) {
         Serial.println("*********");
         Serial.print("Received Value: ");
-        for (int i = 0; i < rxValue.length(); i++)
+        for (int i = 0; i < rxValue.length(); i++) {
           Serial.print(rxValue[i]);
-
+        }
         Serial.println();
+        // !! TODO
+        saveWifiPref(String(rxValue.c_str()));
         Serial.println("*********");
       }
     }
@@ -79,12 +81,16 @@ void setupVirtualUart() {
   Serial.println("Waiting a client connection to notify...");
 }
 
+void send_notify() {
+  pTxCharacteristic->setValue(&txValue, 1);
+  pTxCharacteristic->notify();
+  txValue++;
+  delay(10); // bluetooth stack will go into congestion, if too many packets are sent
+}
+
 void bleLoop() {
   if (deviceConnected) {
-    pTxCharacteristic->setValue(&txValue, 1);
-    pTxCharacteristic->notify();
-    txValue++;
-    delay(10); // bluetooth stack will go into congestion, if too many packets are sent
+    // send_notify();
   }
 
   // disconnecting

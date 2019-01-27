@@ -49,8 +49,27 @@ void setup() {
   // buzzer();
   // flashLed(1000);
   setupMPU9250();
-  wifiMulti.addAP(ssid, password);
-  wifiMulti.addAP("eggfly", "12345678");
+  // TODO
+  String wifiPref = getWifiPref();
+  char wifi_buf[128];
+  wifiPref.toCharArray(wifi_buf, sizeof(wifi_buf));
+  char *wifi_p = wifi_buf;
+  char *wifi_str;
+  uint8_t wifi_pos = 0;
+  char wifi_ssid[128];
+  char wifi_password[128];
+  char * wifi_pair[2] = {wifi_ssid, wifi_password};
+  while ((wifi_str = strtok_r(wifi_p, ",", &wifi_p)) != NULL) {
+    Serial.println(wifi_str);
+    strcpy(wifi_pair[wifi_pos], wifi_str);
+    wifi_pos++;
+  }
+  if (wifi_pos == 2) {
+    // it's a right config!
+    Serial.printf("wifi ssid: %s, password: %s\n", wifi_ssid, wifi_password);
+    wifiMulti.addAP(wifi_ssid, wifi_password);
+  }
+  wifiMulti.addAP(BUILTIN_WIFI_SSID, BUILTIN_WIFI_PASSWORD);
   syncTimeFromWifi(isBootFromReset);
   // attachButtonEvent();
   initIRQ();

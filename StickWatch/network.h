@@ -59,7 +59,7 @@ void syncTimeFromWifi(boolean isReset) {
     ESP_LOGE(TAG, "!isReset and failed to obtain time, ignore..");
   } else {
     ESP_LOGE(TAG, "isReset so failed to obtain time");
-    Serial.printf("Connecting to %s ", ssid);
+    Serial.println("Connecting to wifi");
     boolean wifiConnected = true;
     unsigned long wifiStartTime = millis();
     showConnectingWifi();
