@@ -23,12 +23,11 @@
 #include <U8x8lib.h>
 
 
-#define SensorPin 13
+#define SensorPin 17
 U8X8LOG u8x8log;
 
 
 // These constants won't change. They're used to give names to the pins used:
-const int analogInPin = 13;  // Analog input pin that the potentiometer is attached to
 const int analogOutPin = 9; // Analog output pin that the LED is attached to
 U8X8_SH1107_64X128_4W_HW_SPI u8x8(14, /* dc=*/ 27, /* reset=*/ 33);
 
@@ -60,7 +59,7 @@ void setup() {
 
 void loop() {
   // read the analog in value:
-  sensorValue = analogRead(analogInPin);
+  sensorValue = analogRead(SensorPin);
   // map it to the range of the analog out:
   // print the results to the Serial Monitor:
   Serial.print("sensor = ");

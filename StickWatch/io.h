@@ -16,12 +16,12 @@ void setPinModes() {
   pinMode(LedPin, OUTPUT);
   pinMode(BuzzerPin, OUTPUT);
 
-  pinMode(SensorPin, INPUT);
+  pinMode(BatterySensorPin, INPUT);
   // analogReadResolution(12); // no need
 }
 
-void getBatteryVoltage(float *batteryVoltage, int *dacValue) {
-  int value = analogRead(SensorPin);
+void readBatteryVoltage(float *batteryVoltage, int *dacValue) {
+  int value = analogRead(BatterySensorPin);
   *dacValue = value;
   *batteryVoltage = (20.0 + 68.0) / 68.0 * 3.3 * value / 4096.0;
 }

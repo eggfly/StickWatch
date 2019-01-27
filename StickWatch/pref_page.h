@@ -17,7 +17,7 @@ void PrefPage::onDraw() {
   unsigned long currentTime = millis();
   if (currentTime - batteryVoltageUpdateTime >= 1000) {
     batteryVoltageUpdateTime = currentTime;
-    getBatteryVoltage(&batteryVoltage, &dacValue);
+    readBatteryVoltage(&batteryVoltage, &dacValue);
     Serial.printf("battery update: %.2fV, dacValue=%d\n", batteryVoltage, dacValue);
   }
   sprintf(buf, "Battery: %.2fV (%d)", batteryVoltage, dacValue);
