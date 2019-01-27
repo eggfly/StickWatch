@@ -14,6 +14,7 @@ unsigned long batteryVoltageUpdateTime = 0;
 
 void PrefPage::onDraw() {
   char buf[50];
+  char percent_buf[50];
   unsigned long currentTime = millis();
   if (currentTime - batteryVoltageUpdateTime >= 1000) {
     batteryVoltageUpdateTime = currentTime;
@@ -21,7 +22,9 @@ void PrefPage::onDraw() {
     Serial.printf("battery update: %.2fV, dacValue=%d\n", batteryVoltage, dacValue);
   }
   sprintf(buf, "Battery: %.2fV (%d)", batteryVoltage, dacValue);
+  sprintf(percent_buf, "Battery percent: %.0f%%", getBatteryLevel(batteryVoltage) * 100);
   u8g2.drawStr(1, 1, buf);
+  u8g2.drawStr(1, 10, percent_buf);
 }
 
 #endif // _PAGE_H_

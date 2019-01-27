@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "page.h"
 #include "pref_page.h"
+#include "ble.h"
 
 void setup() {
   setPinModes();
@@ -29,7 +30,8 @@ void setup() {
 
   u8g2.begin();
   // lightness
-  u8g2.setContrast(32);
+  // u8g2.setContrast(32);
+  u8g2.setContrast(10);
 
   setPinModes(); // pin modes must be set after u8g2
   ESP_LOGD(TAG, "2");
@@ -52,6 +54,7 @@ void setup() {
   syncTimeFromWifi(isBootFromReset);
   // attachButtonEvent();
   initIRQ();
+  setupVirtualUart();
 }
 
 unsigned long powerOffButtonTime = 0;
@@ -247,10 +250,11 @@ void loop() {
   fps_prev_time = curr_time;
 
   // auto sleep only when not charging
-  if (!isLastCharging && curr_time - keepWakeUpTime > 60 * 1000) {
+  if (!isLastCharging && curr_time - keepWakeUpTime > 60 * 1000 && currentPage != &prefPage) {
     // increasePrefCounter();
     deepSleep();
   }
+  bleLoop();
   if (digitalRead(BtnPin) == HIGH) {
     powerOffButtonTime = 0;
     // u8x8.setInverseFont(1);
