@@ -4,12 +4,12 @@
   *
   * Made by Reyboz Blog
   * [ http://blog.reyboz.it ]
-  *
-  * Un caloroso ringraziamento a Joseph Karam, autore delle trascrizioni degli
-  * spartiti per pianoforte a due mani sulle note della composizione originale della
-  * Nintendo Entertainment System by Koji Kondo, che ci ha permesso di riprodurre
-  * fedelmente la canzone.
-  * [ http://www.mariopiano.com ]
+  ** warm thanks to joseph karam, author of the transcripts of
+
+* piano sheet music to two hands on the notes of the original composition of the
+* nintendo entertainment system by koji kondo, who allowed us to reproduce
+* faithfully to the song.
+* [http://www.mariopiano.com]
 */
 
 //  [ http://code.google.com/p/rogue-code/wiki/ToneLibraryDocumentation ]
@@ -41,14 +41,15 @@ Tone player_2;
 
 int tempo;
 
-// Questo valore più è alto più stacca le note fra loro. [OPTIONAL]
-int tronca = 15;
+// this value is more high more off the notes between them. [optional]
+int tronca = 15; // truncates
 
-// Puoi impostare i limiti di velocità [OPTIONAL]
-int tempo_minimo = 78;
-int tempo_massimo = 500;
+// you can set the speed limits [optional]
+int tempo_minimo = 78; // min tempo
+int tempo_massimo = 500; // max tempo
 
-// Definisci l'ordine dei pin nel display affinchè siano ordinati secondo la convenzione universale [OPTIONAL]
+// define the order of the pin in the display so that they are ordered according to the universal convention [optional]
+
 int pin_leds[8] = {LED_3, LED_4, LED_5, LED_6, LED_7, LED_2, LED_1, LED_8};
 
 // Note facili da usare (Non modificare)
