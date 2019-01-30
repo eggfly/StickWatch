@@ -16,3 +16,6 @@
 * 出拳速度测试app
 * ESP.getVcc() and extern "C" int rom_phy_get_vdd33();
 * ESP.getSdkVersion()
+* bluetooth mp3 player !!
+* IR transmitter
+
