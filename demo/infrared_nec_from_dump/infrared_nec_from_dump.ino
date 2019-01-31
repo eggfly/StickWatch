@@ -54,92 +54,22 @@ static const char* NEC_TAG = "NEC";
 
 #define rmt_item32_tIMEOUT_US  9500   /*!< RMT receiver timeout value(us) */
 
-/*
-   @brief Build register value of waveform for NEC one data bit
-*/
-static inline void nec_fill_item_level(rmt_item32_t* item, int high_us, int low_us)
-{
-  ESP_LOGD(NEC_TAG, "ADDING: high_us: %d, low_us: %d", high_us, low_us);
-  item->level0 = 1;
-  item->duration0 = (high_us) / 10 * RMT_TICK_10_US;
-  item->level1 = 0;
-  item->duration1 = (low_us) / 10 * RMT_TICK_10_US;
-}
-
-/*
-   @brief Generate NEC header value: active 9ms + negative 4.5ms
-*/
-static void nec_fill_item_header(rmt_item32_t* item)
-{
-  nec_fill_item_level(item, NEC_HEADER_HIGH_US, NEC_HEADER_LOW_US);
-}
-
-/*
-   @brief Generate NEC data bit 1: positive 0.56ms + negative 1.69ms
-*/
-static void nec_fill_item_bit_one(rmt_item32_t* item)
-{
-  nec_fill_item_level(item, NEC_BIT_ONE_HIGH_US, NEC_BIT_ONE_LOW_US);
-}
-
-/*
-   @brief Generate NEC data bit 0: positive 0.56ms + negative 0.56ms
-*/
-static void nec_fill_item_bit_zero(rmt_item32_t* item)
-{
-  nec_fill_item_level(item, NEC_BIT_ZERO_HIGH_US, NEC_BIT_ZERO_LOW_US);
-}
-
-/*
-   @brief Generate NEC end signal: positive 0.56ms
-*/
-static void nec_fill_item_end(rmt_item32_t* item)
-{
-  nec_fill_item_level(item, NEC_BIT_END, 0x7fff);
-}
-
-/*
-   @brief Check whether duration is around target_us
-*/
-inline bool nec_check_in_range(int duration_ticks, int target_us, int margin_us)
-{
-  if (( NEC_ITEM_DURATION(duration_ticks) < (target_us + margin_us))
-      && ( NEC_ITEM_DURATION(duration_ticks) > (target_us - margin_us))) {
-    return true;
-  } else {
-    return false;
-  }
-}
 
 /*
    @brief Build NEC 32bit waveform.
 */
-static int nec_build_items(int channel, rmt_item32_t* item, int item_num, uint8_t* data_array)
+static int nec_build_items(int channel, rmt_item32_t* item, int item_num, unsigned int * raw_data)
 {
   int i = 0;
-  nec_fill_item_header(item++);
-  i++;
-  bool need_stop = false;
-  while (!need_stop) {
-    uint8_t data_byte = *data_array;
-    data_array++;
-    for (int j = 0; j < 8; j++) {
-      if (data_byte & 0x80) {
-        nec_fill_item_bit_one(item);
-      } else {
-        nec_fill_item_bit_zero(item);
-      }
-      item++;
-      i++;
-      data_byte <<= 1;
-      if (i >= item_num - 1) {
-        need_stop = true;
-        break;
-      }
-    }
+  while (i < item_num * 2) {
+    item->level0 = 1;
+    item->duration0 = (raw_data[i]) / 10 * RMT_TICK_10_US;
+    i++;
+    item->level1 = 0;
+    item->duration1 = (raw_data[i]) / 10 * RMT_TICK_10_US;
+    i++;
+    item++;
   }
-  nec_fill_item_end(item);
-  i++;
   return i;
 }
 
@@ -175,21 +105,18 @@ static void rmt_example_nec_tx_task(void*)
   nec_tx_init();
   esp_log_level_set(NEC_TAG, ESP_LOG_INFO);
   int channel = RMT_TX_CHANNEL;
-  uint8_t data_array[15] = {
-    0x6A, 0xAE, 0x00, 0x00,
-    0x4C, 0x43, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0xB8
-  };
+
+  unsigned int  rawData[244] = {8350, 4100, 550, 500, 600, 1550, 600, 1550, 600, 500, 600, 1550, 600, 450, 600, 1550, 600, 500, 600, 1550, 600, 500, 550, 1550, 600, 500, 600, 1550, 600, 1550, 600, 1550, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 1550, 600, 1550, 600, 500, 550, 500, 600, 1550, 600, 500, 550, 500, 600, 500, 600, 500, 550, 1600, 550, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 600, 450, 600, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 600, 450, 600, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 600, 450, 600, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 550, 500, 600, 500, 600, 500, 550, 500, 600, 500, 550, 500, 600, 1550, 600, 500, 600, 1550, 550, 1600, 550, 1600, 550, 500, 600, 500, 600, 450, 600, 0x9fff};
+  // unsigned int rawData[244] = {8350, 4100, 600, 500, 600, 1550, 600, 1600, 600, 500, 600, 1550, 600, 500, 550, 1650, 600, 500, 550, 1600, 550, 550, 600, 1600, 550, 550, 550, 1600, 550, 1650, 550, 1600, 550, 550, 550, 550, 600, 500, 550, 550, 550, 500, 550, 550, 550, 550, 550, 550, 550, 550, 550, 500, 550, 550, 550, 550, 600, 500, 550, 550, 550, 500, 600, 500, 500, 600, 550, 550, 550, 1600, 600, 500, 500, 600, 550, 1650, 550, 1600, 500, 600, 600, 500, 550, 550, 550, 1600, 500, 600, 550, 550, 550, 550, 550, 550, 550, 1600, 550, 1650, 550, 550, 550, 500, 500, 600, 550, 550, 550, 550, 550, 550, 550, 500, 550, 550, 500, 600, 550, 550, 550, 500, 600, 500, 550, 550, 500, 600, 550, 550, 550, 500, 600, 500, 550, 550, 500, 600, 550, 550, 550, 500, 600, 500, 550, 550, 500, 600, 550, 500, 600, 500, 600, 500, 550, 550, 500, 600, 550, 550, 550, 500, 600, 500, 550, 550, 500, 600, 550, 550, 550, 500, 600, 500, 550, 550, 500, 600, 550, 500, 600, 500, 600, 500, 600, 500, 550, 550, 500, 550, 600, 500, 600, 500, 600, 500, 550, 550, 500, 550, 600, 500, 600, 500, 600, 500, 550, 550, 500, 550, 600, 500, 600, 500, 600, 500, 550, 550, 500, 550, 600, 500, 550, 550, 600, 500, 550, 500, 550, 1650, 600, 500, 600, 500, 550, 1600, 600, 500, 600, 1600, 550, 500, 550, 550, 600, 0x9fff};
   for (;;) {
-    int NEC_DATA_ITEM_NUM = sizeof(data_array) * 8 + 2; // NEC code item number: header + 120 bit data + end
-    ESP_LOGI(NEC_TAG, "RMT TX DATA");
+    int NEC_DATA_ITEM_NUM = sizeof(rawData) / sizeof(unsigned int) / 2;
+    ESP_LOGI(NEC_TAG, "RMT TX DATA, size=%d", sizeof(rawData) / sizeof(unsigned int));
     size_t size = (sizeof(rmt_item32_t) * NEC_DATA_ITEM_NUM );
     rmt_item32_t* items = (rmt_item32_t*) malloc(size);
     int item_num = NEC_DATA_ITEM_NUM ;
     memset((void*) items, 0, size);
     //To build a series of waveforms.
-    nec_build_items(channel, items, item_num, data_array);
+    nec_build_items(channel, items, item_num, rawData);
     // dump
     for (int i = 0; i < item_num; i++) {
       rmt_item32_t rmt = items[i];
