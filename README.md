@@ -10,4 +10,4 @@ M5Stack-Core-ESP32, QIO, 80MHz, No OTA (Large APP), 921600, Verbose
 
 依赖：
 - Wifi
-- ArduinoJson 6.1.0-beta
+- ArduinoJson 6.2.0-beta as local dependancy
