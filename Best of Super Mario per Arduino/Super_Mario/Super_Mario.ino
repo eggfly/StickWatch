@@ -1,15 +1,15 @@
 /**
-  * Super Mario Overworld / Main Theme per Arduino
-  * Code for Sketch (Arduino) tested on Arduino UNO R3
-  *
-  * Made by Reyboz Blog
-  * [ http://blog.reyboz.it ]
+    Super Mario Overworld / Main Theme per Arduino
+    Code for Sketch (Arduino) tested on Arduino UNO R3
+
+    Made by Reyboz Blog
+    [ http://blog.reyboz.it ]
   ** warm thanks to joseph karam, author of the transcripts of
 
-* piano sheet music to two hands on the notes of the original composition of the
-* nintendo entertainment system by koji kondo, who allowed us to reproduce
-* faithfully to the song.
-* [http://www.mariopiano.com]
+  piano sheet music to two hands on the notes of the original composition of the
+  nintendo entertainment system by koji kondo, who allowed us to reproduce
+  faithfully to the song.
+  [http://www.mariopiano.com]
 */
 
 //  [ http://code.google.com/p/rogue-code/wiki/ToneLibraryDocumentation ]
@@ -134,18 +134,18 @@ void setup() {
   player_2.begin(PIN_PLAYER_2);
 }
 
-/* YOU CAN USE THESE FUNCTIONS:
-/**
- * OVERWORLD();
- * UNDERWATER();
- * UNDERWORLD();
- * CASTLE();
- * FLAGPOLEFANFARE();
- * DAMAGEWARP();
- * COIN( number_of_coin );
- * POWERUP();
- * STARMAN();
- * DEATH();
+/*
+   YOU CAN USE THESE FUNCTIONS:
+   OVERWORLD();
+   UNDERWATER();
+   UNDERWORLD();
+   CASTLE();
+   FLAGPOLEFANFARE();
+   DAMAGEWARP();
+   COIN( number_of_coin );
+   POWERUP();
+   STARMAN();
+   DEATH();
 */
 void loop() {
   ONEUP();
@@ -172,7 +172,7 @@ void loop() {
   UNDERWATER();
   pausa(8);
   DEATH();
-  while(1); // Shut up!
+  while (1); // Shut up!
 }
 
 void enableDisplay(int pin) {
@@ -214,7 +214,7 @@ int inputTempo() {
 
     Ed è sconvolgente sapere che se noi siamo quelli 'strani', la 'colpa' è tutta
     di un monaco (pure Italiano).
-    
+
       [ http://it.wikipedia.org/wiki/Paolo_Diacono ]
 
     Curioso? No? Bah...
@@ -229,26 +229,26 @@ int inputTempo() {
     siamo presi una nottata del nostro tempo per esplicitare la nota dalla
     funzione della frequenza citata in alto, e abbiamo ottenuto un vero e proprio
     riconoscitore di note dinamico.
-    
+
     Ed ecco il risultato:
 */
 int getAmericanIndexOfLetterFromFrequency(int frequency) {
-  double nota = 12*(log(((double)frequency)/440)/log(2));
+  double nota = 12 * (log(((double)frequency) / 440) / log(2));
   //Serial.println();
   //Serial.println(nota);
-  while(nota >= 12) {
-     nota = nota-12;
+  while (nota >= 12) {
+    nota = nota - 12;
   }
-  while(nota < 0 ) {
-     nota = nota+12;
+  while (nota < 0 ) {
+    nota = nota + 12;
   }
   //Serial.println(nota);
   // Arrotondamento
   float virgola = nota - ((int) nota);
-  if(virgola >= 0) {
+  if (virgola >= 0) {
     return (virgola < 0.5) ? nota : ++nota;
   } else {
-    return (virgola <-0.5) ? nota : --nota;
+    return (virgola < -0.5) ? nota : --nota;
   }
 }
 
@@ -268,7 +268,7 @@ void setLetter(int index_letter) {
     {true, false, true, true, true, true, true, false}, // G
     {true, false, true, true, true, true, true, true} // G_d
   };
-  for(int i=0; i<8; i++) {
+  for (int i = 0; i < 8; i++) {
     digitalWrite(pin_leds[i], (letter_table[index_letter][i]) ? HIGH : LOW);
   }
 }
@@ -277,7 +277,7 @@ void suona(int frequency, float fract) {
   setLetter(getAmericanIndexOfLetterFromFrequency(frequency));
   player_2.play(frequency, inputTempo() * fract - tronca);
   enableDisplay(DISPLAY_1);
-  while(player_2.isPlaying());
+  while (player_2.isPlaying());
   disableDisplay(DISPLAY_1);
   delay(tronca);
 }
@@ -287,7 +287,7 @@ void suonaCoppia(int frequency, float fract) {
   int ms = inputTempo() * fract - tronca;
   player_1.play(frequency, ms);
   player_2.play(frequency, ms);
-  while(player_1.isPlaying() || player_2.isPlaying()) {
+  while (player_1.isPlaying() || player_2.isPlaying()) {
     enableDisplay(DISPLAY_1);
     setLetter(index_letter);
     delay(4);
@@ -307,7 +307,7 @@ void suonaDoppio(int frequency_1, int frequency_2, float fract) {
   int ms = inputTempo() * fract - tronca;
   player_1.play(frequency_1, ms);
   player_2.play(frequency_2, ms);
-  while(player_1.isPlaying() || player_2.isPlaying()) {
+  while (player_1.isPlaying() || player_2.isPlaying()) {
     enableDisplay(DISPLAY_1);
     setLetter(index_letter_1);
     delay(4);
@@ -336,7 +336,7 @@ void introduzione() {
   suonaDoppio(DO5, FA_d4, 1);
   suonaDoppio(MI5, FA_d4, 1);
   pausa(1);
-  
+
   // Battuta 3
   suonaDoppio(SOL5, SOL4, 1);
   pausa(3);
@@ -479,7 +479,7 @@ void OVERWORLDFoglio4Riga1() {
   suonaDoppio(SOL4, DO4, 1);
   pausa(1);
   suona(SOL3, 1); // Non mettere SOL2 perchè la frequenza bassa manda a troie tutta la classe Tone
-  pausa(1);  
+  pausa(1);
 }
 
 void OVERWORLDFoglio4Riga2() {
@@ -589,12 +589,12 @@ void OVERWORLDFoglio2() {
 void OVERWORLDFoglio4() {
   // Riga 1
   OVERWORLDFoglio4Riga1();
-  // Riga 2 
+  // Riga 2
   OVERWORLDFoglio4Riga2();
   // Riga 3
   OVERWORLDFoglio4Riga1();
   // Riga 4
-  introduzione(); 
+  introduzione();
 }
 
 void OVERWORLDFoglio6() {
@@ -713,8 +713,8 @@ void UNDERWORLD() {
 }
 
 void COIN(int n_coin) {
-  for(int i=0; i<n_coin; i++) {
-     suonaCoppia(SI5, 0.5);  
+  for (int i = 0; i < n_coin; i++) {
+    suonaCoppia(SI5, 0.5);
   }
   suonaCoppia(MI6, 1.5);
 }
@@ -723,24 +723,24 @@ void STARMAN() {
   suonaDoppio(DO5, FA4, 1);
   suonaDoppio(DO5, FA4, 1);
   suonaDoppio(DO5, FA4, 1);
-  suona(RE4, (float) 1/2);
-  suonaDoppio(DO5, FA4, (float) 1/2);
-  pausa((float) 1/2);
+  suona(RE4, (float) 1 / 2);
+  suonaDoppio(DO5, FA4, (float) 1 / 2);
+  pausa((float) 1 / 2);
   suonaDoppio(DO5, FA4, 1);
-  suona(RE4, (float) 1/2);
-  suonaDoppio(DO5, FA4, (float) 1/2);
-  suona(RE4, (float) 1/2);
+  suona(RE4, (float) 1 / 2);
+  suonaDoppio(DO5, FA4, (float) 1 / 2);
+  suona(RE4, (float) 1 / 2);
   suonaDoppio(DO5, FA4, 1);
   suonaDoppio(SI4, MI4, 1);
   suonaDoppio(SI4, MI4, 1);
   suonaDoppio(SI4, MI4, 1);
-  suona(DO4, (float) 1/2);
-  suonaDoppio(SI4, MI4, (float) 1/2);
-  pausa((float) 1/2);
+  suona(DO4, (float) 1 / 2);
+  suonaDoppio(SI4, MI4, (float) 1 / 2);
+  pausa((float) 1 / 2);
   suonaDoppio(SI4, MI4, 1);
-  suona(DO4, (float) 1/2);
-  suonaDoppio(SI4, MI4, (float) 1/2);
-  suona(DO4, (float) 1/2);
+  suona(DO4, (float) 1 / 2);
+  suonaDoppio(SI4, MI4, (float) 1 / 2);
+  suona(DO4, (float) 1 / 2);
   suonaDoppio(SI4, MI4, 1);
 }
 
@@ -752,7 +752,7 @@ void FLAGPOLEFANFARE() {
   float tempo = 0.0851;
   float passoFreq = (freqFinale - freqPartenza) / 47;
   float freq = freqPartenza;
-  while(freq<=freqFinale) {
+  while (freq <= freqFinale) {
     suona(freq, tempo);
     freq += passoFreq;
   }
@@ -775,7 +775,7 @@ void FLAGPOLEFANFARE() {
   suonaDoppio(RE_d5, SOL_d3, TERZINA_2);
   suonaDoppio(SOL_d5, RE_d3, 2);
   suonaDoppio(RE_d5, DO3, 2);
-  
+
   suona(LA_d3, TERZINA_2);
   suonaDoppio(RE4, LA_d3, TERZINA_2);
   suonaDoppio(FA4, FA3, TERZINA_2);
@@ -818,7 +818,7 @@ void ITEMBLOCK() {
 }
 
 void DAMAGEWARP() {
-  for(int i=0; i<3; i++) {
+  for (int i = 0; i < 3; i++) {
     suonaCoppia(LA4, TERZINA_3);
     suonaCoppia(MI4, TERZINA_3);
     suonaCoppia(LA3, TERZINA_3);
@@ -840,7 +840,7 @@ void ONEUP() {
 void RESCUEFANFARE() {
   int pretronca = tronca;
   tronca = 0;
-  for(int i=0; i<2; i++) {
+  for (int i = 0; i < 2; i++) {
     suonaDoppio(DO5, MI3, TERZINA_2);
     suonaDoppio(SOL4, MI3, TERZINA_2);
     suonaDoppio(MI4, MI3, TERZINA_2);
@@ -849,12 +849,12 @@ void RESCUEFANFARE() {
   suonaDoppio(DO5, MI3, 1);
   suonaDoppio(DO5, MI3, 0.5);
   suonaDoppio(DO5, MI3, 0.5);
-  for(int i=0; i<3; i++) {
+  for (int i = 0; i < 3; i++) {
     suonaDoppio(DO5, MI3, TERZINA_2);
   }
-  
+
   tronca = 0;
-  for(int i=0; i<2; i++) {
+  for (int i = 0; i < 2; i++) {
     suonaDoppio(DO_d5, FA3, TERZINA_2);
     suonaDoppio(SOL_d4, FA3, TERZINA_2);
     suonaDoppio(FA4, FA3, TERZINA_2);
@@ -863,12 +863,12 @@ void RESCUEFANFARE() {
   suonaDoppio(DO_d5, FA3, 1);
   suonaDoppio(DO_d5, FA3, 0.5);
   suonaDoppio(DO_d5, FA3, 0.5);
-  for(int i=0; i<3; i++) {
+  for (int i = 0; i < 3; i++) {
     suonaDoppio(DO_d5, FA3, TERZINA_2);
   }
-  
+
   tronca = 0;
-  for(int i=0; i<2; i++) {
+  for (int i = 0; i < 2; i++) {
     suonaDoppio(RE_d5, SOL4, TERZINA_2);
     suonaDoppio(LA_d4, RE_d4, TERZINA_2);
     suonaDoppio(SOL4, LA_d3, TERZINA_2);
@@ -877,15 +877,15 @@ void RESCUEFANFARE() {
   suonaDoppio(RE_d5, SOL4, 1);
   suonaDoppio(RE_d5, SOL4, 0.5);
   suonaDoppio(RE_d5, SOL4, 0.5);
-  for(int i=0; i<3; i++) {
+  for (int i = 0; i < 3; i++) {
     suonaDoppio(FA5, LA4, TERZINA_2);
   }
   suonaDoppio(SOL5, SI4, 4);
 }
 
 void DEATH() {
-  suonaCoppia(DO5, (float) 1/4);
-  suonaCoppia(DO_d5, (float) 1/4);
+  suonaCoppia(DO5, (float) 1 / 4);
+  suonaCoppia(DO_d5, (float) 1 / 4);
   suonaCoppia(RE5, 0.5);
   pausa(3);
   suonaDoppio(SI4, SOL4, 1);
@@ -961,7 +961,7 @@ void CASTLEBattuta3() {
   suonaDoppio(DO_d4, LA_d4, SEMICROMA);
   suona(FA_d4, SEMICROMA);
   suonaDoppio(DO4, SOL_d4, SEMICROMA);
-  suona(FA_d4, SEMICROMA); 
+  suona(FA_d4, SEMICROMA);
 }
 
 void CASTLEBattuta5() {
@@ -973,7 +973,7 @@ void CASTLEBattuta5() {
   suona(LA_d4, SEMICROMA);
   suonaDoppio(MI5, DO4, SEMICROMA);
   suona(LA_d4, SEMICROMA);
-  
+
   suonaDoppio(FA5, DO_d5, SEMICROMA);
   suona(LA_d4, SEMICROMA);
   suonaDoppio(MI5, DO5, SEMICROMA);
@@ -986,8 +986,8 @@ void CASTLEBattuta5() {
 
 void CASTLE() {
   int pretronca = tronca;
-  tronca = 0; 
-  for(int i=0; i<2; i++) {
+  tronca = 0;
+  for (int i = 0; i < 2; i++) {
     CASTLEBattuta1();
     CASTLEBattuta1();
     CASTLEBattuta3();
@@ -995,7 +995,7 @@ void CASTLE() {
     CASTLEBattuta5();
     CASTLEBattuta5();
   }
-  tronca = pretronca;  
+  tronca = pretronca;
 }
 
 void UNDERWATER() {
@@ -1005,11 +1005,11 @@ void UNDERWATER() {
   suonaDoppio(RE4, RE4, 1);
   suonaDoppio(MI4, DO_d4, 1);
   suonaDoppio(FA_d4, DO4, 1);
-  
+
   suonaDoppio(SOL4, SI3, 1);
   suonaDoppio(LA4, DO4, 1);
   suonaDoppio(LA_d4, DO_d4, 1);
-  
+
   suonaDoppio(SI4, RE4, 0.5);
   suonaDoppio(SI4, RE4, 0.5);
   suonaDoppio(SI4, RE4, 1);
@@ -1021,62 +1021,62 @@ void UNDERWATER() {
   suonaDoppio(MI5, DO3, 1);
   suonaDoppio(MI5, SOL3, 1);
   suonaDoppio(MI5, DO4, 1);
-  
+
   suonaDoppio(RE_d5, SI2, 1);
   suonaDoppio(RE_d5, SOL3, 1);
   suonaDoppio(RE_d5, SI3, 1);
-  
+
   suonaDoppio(MI5, DO3, 1);
   suonaDoppio(MI5, SOL3, 1);
   suonaDoppio(MI5, DO4, 1);
-  
+
   suona(MI4, 0.5);
   suonaDoppio(SOL4, MI4, 0.5);
   suonaDoppio(LA4, SOL3, 0.5);
   suonaDoppio(SI4, SOL3, 0.5);
   suonaDoppio(DO5, DO4, 0.5);
   suonaDoppio(RE5, DO4, 0.5);
-  
+
   // Riga 3
   suonaDoppio(MI5, DO3, 1);
   suonaDoppio(MI5, SOL3, 1);
   suonaDoppio(MI5, DO4, 1);
-  
+
   suonaDoppio(RE_d5, SI2, 1);
   suonaDoppio(RE_d5, SOL3, 1);
   suonaDoppio(FA5, SI3, 1);
-  
+
   suonaDoppio(MI5, DO3, 1);
   suonaDoppio(MI5, SOL3, 1);
   suonaDoppio(MI5, DO4, 1);
-  
+
   suona(MI3, 1);
   suona(SOL3, 1);
   suona(DO4, 0.5);
   suona(SOL4, 0.5);
-  
+
   // Riga 4
   suonaDoppio(RE5, RE3, 1);
   suonaDoppio(RE5, SOL3, 1);
   suonaDoppio(RE5, SI3, 1);
-  
+
   suonaDoppio(DO_d5, DO_d3, 1);
   suonaDoppio(DO_d5, FA_d3, 1);
   suonaDoppio(DO_d5, LA_d3, 1);
-  
+
   suonaDoppio(RE5, RE3, 1);
   suonaDoppio(RE5, SOL3, 1);
   suonaDoppio(RE5, SI3, 1);
-  
+
   suona(SI2, 0.5);
   suonaDoppio(SOL4, SI2, 0.5);
   suonaDoppio(LA4, SOL3, 0.5);
   suonaDoppio(SI4, SOL3, 0.5);
   suonaDoppio(DO5, SI3, 0.5);
   suonaDoppio(DO_d5, SI3, 0.5);
-  
+
   // Foglio 2
-  
+
   // Riga 1
   suonaDoppio(RE5, RE3, 1);
   suonaDoppio(RE5, SOL3, 1);
@@ -1085,71 +1085,71 @@ void UNDERWATER() {
   suonaDoppio(SOL4, SI2, 1);
   suonaDoppio(SOL4, SOL3, 1);
   suonaDoppio(FA5, SI3, 1);
-  
+
   suonaDoppio(MI5, DO3, 1);
   suonaDoppio(MI5, SOL3, 1);
   suonaDoppio(MI5, SOL4, 1);
-  
+
   suona(DO3, 1); // Non posso fare SOL2: Arduino esplode
   suona(SOL3, 1);
   suona(DO4, 0.5);
   suonaDoppio(SOL4, DO4, 0.5);
-  
+
   // Riga 2
   suonaDoppio(SOL5, DO3, 1);
   suonaDoppio(SOL5, SOL3, 1);
   suonaDoppio(SOL5, MI4, 1);
-  
+
   suonaDoppio(SOL5, SI2, 1);
   suonaDoppio(SOL5, SOL3, 1);
   suonaDoppio(SOL5, RE4, 1);
-  
+
   suonaDoppio(SOL5, SI2, 1); // CON LA_d2 Esplode!
   suonaDoppio(SOL5, SOL3, 1);
   suonaDoppio(SOL5, DO_d4, 1);
-  
+
   suonaDoppio(SOL5, DO_d3, 1);
   suonaDoppio(LA5, SOL3, 1);
   suona(MI4, 0.5);
   suonaDoppio(SOL5, MI4, 0.5);
-  
+
   // Riga 3
   suonaDoppio(FA5, RE3, 1);
   suonaDoppio(FA5, LA3, 1);
   suonaDoppio(FA5, RE4, 1);
-  
+
   suonaDoppio(FA5, DO_d3, 1);
   suonaDoppio(FA5, LA3, 1);
   suonaDoppio(FA5, DO_d4, 1);
-  
+
   suonaDoppio(FA5, DO3, 1);
   suonaDoppio(FA5, LA3, 1);
   suonaDoppio(FA5, RE4, 1);
-  
+
   suonaDoppio(FA5, SI2, 1);
   suonaDoppio(SOL5, SOL3, 1);
   suona(RE4, 0.5);
   suonaDoppio(FA5, RE4, 0.5);
-  
+
   // Riga 4
-  
+
   suonaDoppio(MI5, DO3, 1); // COn DO2 esplode!
   suonaDoppio(MI5, SOL3, 1);
   suonaDoppio(MI5, MI4, 1);
-  
+
   suonaDoppio(LA4, SOL3, 1); // Con SOL2 esplode!
   suonaDoppio(SI4, SOL3, 1);
   suonaDoppio(FA5, SOL3, 1);
-  
+
   suonaDoppio(MI5, MI3, 0.5);
   suonaDoppio(MI5, MI3, 0.5);
   suonaDoppio(MI5, MI3, 1.5);
   suonaDoppio(SI4, SI2, 0.5);
-  
+
   suonaDoppio(DO5, DO3, 3);
 
   tronca = pretronca;
-  
+
 }
 
 void OVERWORLD() {
@@ -1170,5 +1170,5 @@ void OVERWORLD() {
   // Foglio 8
   //OVERWORLDFoglio4();
   // Foglio 9
-  //OVERWORLDFoglio6(); 
+  //OVERWORLDFoglio6();
 }
