@@ -6,7 +6,7 @@
 
 #include <HTTPClient.h>
 #define ARDUINOJSON_USE_LONG_LONG 1
-#include "ArduinoJson.h"
+#include "src/ArduinoJson_6.2.0-beta/ArduinoJson.h"
 
 #include "utils.h"
 
