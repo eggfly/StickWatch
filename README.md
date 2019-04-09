@@ -26,3 +26,7 @@ const char* BUILTIN_WIFI_SSID      = "Your WIFI ssid";
 const char* BUILTIN_WIFI_PASSWORD  = "********";
 ```
 然后打开 StickWatch.ino，编译下载
+
+### 注意
+
+成功烧录后，Stick 上显示的温度和电压数值都是不可以用，因为没有 Stick 中对应的硬件电路支持
