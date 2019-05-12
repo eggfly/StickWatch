@@ -66,7 +66,7 @@ void syncTimeFromWifi(boolean isReset) {
     while (wifiMulti.run() != WL_CONNECTED) {
       Serial.print(".");
       delay(500);
-      if (millis() - wifiStartTime >= 10 * 1000) {
+      if (millis() - wifiStartTime >= 6 * 1000) {
         wifiConnected = false;
         break;
       }

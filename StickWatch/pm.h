@@ -68,12 +68,22 @@ void print_wakeup_reason() {
   }
 }
 
-
-void setPowerBoostKeepOn(bool en) {
+// Bit(s) R/W  RESET  Desc
+// 7:6     RW     10  Reserved
+// 5       RW      1  Boost enable 0: disable, 1:enable   注：disable 后 IP5306 没办法自动轻载关机，需要按键发送双击脉冲信号才能关机进入休眠
+// 4       RW .    1  Charger enable 0: disable, 1:enable 注：在充满电停充充电后，在不拔掉输入的情况下 enable->disable->enable，可以重新开启充电
+// 3       RW      1  Reserved
+// 2       RW      1  插入负载自动开机功能使能 0: disable, 1:enable
+// 1       RW      1  BOOST 输出常开功能 0: disable, 1:enable
+// 0       RW      0  按键关机使能 0: disable, 1:enable
+void setupPowerConfig() {
   Wire.beginTransmission(IP5306_ADDR);
   Wire.write(IP5306_REG_SYS_CTL0);
-  if (en) Wire.write(0x37); // Set bit1: 1 enable 0 disable boost keep on
-  else Wire.write(0x35);    // 0x37 is default reg value
+  // if (en) Wire.write(0x37); // Set bit1: 1 enable 0 disable boost keep on
+  // else Wire.write(0x35);    // 0x37 is default reg value
+  Wire.write(0x31);    // 0x31
+  //Wire.write(0x11);    // 0x31
+
   int error = Wire.endTransmission();
   Serial.print("Wire.endTransmission result: ");
   Serial.println(error);

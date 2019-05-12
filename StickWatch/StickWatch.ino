@@ -17,13 +17,13 @@ void setup() {
   // simply to sleep when power chip reboot
   if (esp_sleep_get_wakeup_cause() == ESP_SLEEP_WAKEUP_TIMER) {
     led(true, 200);
-    pureDeepSleep();
+    // pureDeepSleep();
   }
 
   ESP_LOGD(TAG, "0");
   Serial.begin(115200);
   Wire.begin(21, 22, 100000);
-  setPowerBoostKeepOn(true);
+  setupPowerConfig();
 
   // set_freq(240);
   ESP_LOGD(TAG, "1");
@@ -271,7 +271,7 @@ void loop() {
   // auto sleep only when not charging
   if (!isLastCharging && curr_time - keepWakeUpTime > 60 * 1000 && currentPage != &prefPage) {
     // increasePrefCounter();
-    deepSleep();
+    // deepSleep();
   }
   bleLoop();
   if (digitalRead(BtnPin) == HIGH) {
