@@ -3,6 +3,10 @@ A smart watch based on M5Stick of ESP32
 
 https://item.taobao.com/item.htm?id=581055502939
 
+StickWatch Video:
+
+https://www.bilibili.com/video/BV1it411H7Vb/
+
 
 
 Use ESP-idf + Arduino to build this project with configuration:
